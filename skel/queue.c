@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdbool.h>
 #include "utils.h"
 
 typedef struct q_node_t {
@@ -82,7 +83,7 @@ q_node_t *q_front(queue_t *q)
     return q->front;
 }
 
-int q_is_empty(queue_t *q)
+bool q_is_empty(queue_t *q)
 {
     return (!q->size);
 }

@@ -1,6 +1,8 @@
 #ifndef __QUEUE__
 #define __QUEUE__
 
+#include <stdbool.h>
+
 typedef struct q_node_t {
     /* Pointer catre urmatorul nod din lista */
     struct q_node_t *next;
@@ -20,7 +22,7 @@ typedef struct queue_t {
 
 /**
  * @brief Functie care creeaza si initializeaza o coada
- * @return (queue_t *) catre lista noii cozi
+ * @return - (queue_t *) catre lista noii cozi
  */
 queue_t *q_create(unsigned int data_size);
 
@@ -36,14 +38,14 @@ void q_dequeue(queue_t *q);
 
 /**
  * @brief Functie care determina primul element din coada
- * @return (q_node_t *) catre primul element din coada
+ * @return - (q_node_t *) catre primul element din coada
  */
 q_node_t *q_front(queue_t *q);
 
 /**
  * @brief Functie care determina daca o coada este goala sau nu
- * @return (int) 1 if empty, 0 otherwise
+ * @return - true if empty, false otherwise
  */
-int q_is_empty(queue_t *q);
+bool q_is_empty(queue_t *q);
 
 #endif /* __QUEUE__ */
