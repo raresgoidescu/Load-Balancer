@@ -2,18 +2,13 @@
 #define __QUEUE__
 
 #include <stdbool.h>
-
-typedef struct q_node_t {
-    /* Pointer catre urmatorul nod din lista */
-    struct q_node_t *next;
-    void *data;
-} q_node_t;
+#include "simply_linked_list.h"
 
 typedef struct queue_t {
     /* Pointer catre primul element al listei */
-    q_node_t *front;
+    ll_node_t *front;
     /* Pointer catre ultimul element al listei */
-    q_node_t *rear;
+    ll_node_t *rear;
     /* Numarul de octeti al unui element */
     unsigned int data_size;
     /* Numarul de elemente din coada */
@@ -38,14 +33,19 @@ void q_dequeue(queue_t *q);
 
 /**
  * @brief Functie care determina primul element din coada
- * @return - (q_node_t *) catre primul element din coada
+ * @return - (ll_node_t *) catre primul element din coada
  */
-q_node_t *q_front(queue_t *q);
+ll_node_t *q_front(queue_t *q);
 
 /**
  * @brief Functie care determina daca o coada este goala sau nu
  * @return - true if empty, false otherwise
  */
 bool q_is_empty(queue_t *q);
+
+/**
+ * @brief Functie care elibereaza memoria folosita de o coada
+ */
+void q_free(queue_t *queue);
 
 #endif /* __QUEUE__ */

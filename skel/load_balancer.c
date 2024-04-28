@@ -12,7 +12,7 @@ load_balancer *init_load_balancer(bool enable_vnodes) {
 
 void loader_add_server(load_balancer* main, int server_id, int cache_size) {
     /* TODO: Remove test_server after checking the server implementation */
-    main->test_server = init_server(cache_size);
+    // main->test_server = init_server(cache_size);
 }
 
 void loader_remove_server(load_balancer* main, int server_id) {
