@@ -15,6 +15,7 @@ void free_entry(void *entry_ptr) {
     entry_t *entry = entry_ptr;
     free(entry->key);
     free(entry->val);
+    free(entry);
 }
 
 hash_map_t *create_hash_map(unsigned int n_buckets,
@@ -70,6 +71,7 @@ void add_entry(hash_map_t *map,
                void *key, unsigned int key_size,
                void *val, unsigned int val_size) {
     unsigned int index = map->hash(key) % map->max_size;
+    linked_list_t *curr_bucket = map->buckets[index];
 
     entry_t new_entry; //malloc(sizeof(entry_t));
     //DIE(!new_entry, "Malloc failed");
@@ -83,7 +85,7 @@ void add_entry(hash_map_t *map,
     memcpy(new_entry.key, key, key_size);
     memcpy(new_entry.val, val, val_size);
 
-    add_ll_nth_node(map->buckets[index], map->buckets[index]->size, &new_entry);
+    add_ll_nth_node(curr_bucket, curr_bucket->size, &new_entry);
 }
 
 void remove_entry(hash_map_t *map, void *key) {
@@ -92,15 +94,13 @@ void remove_entry(hash_map_t *map, void *key) {
     ll_node_t *curr = map->buckets[index]->head;
     ll_node_t *prev = NULL;
 
-    int position_in_bucket = 0;
-
     while (curr) {
-        prev = curr;
         entry_t *curr_entry = curr->data;
-        if (!map->compare(key, curr_entry->key))
+        if (!map->compare(key, curr_entry->key)) {
             break;
+        }
+        prev = curr;
         curr = curr->next;
-        ++position_in_bucket;
     }
 
     if (!curr) {
@@ -108,12 +108,14 @@ void remove_entry(hash_map_t *map, void *key) {
     } else {
         map->free_entry(curr->data);
         
-        prev->next = curr->next;
-        (!prev) ? (map->buckets[index]->head = curr->next) : (prev->next = curr->next);
+        if (!prev) {
+            map->buckets[index]->head = curr->next;
+        } else {
+            prev->next = curr->next;
+        }
+
         map->buckets[index]->size--;
 
-        free(curr->data);
-        curr->data = NULL;
         free(curr);
         curr = NULL;
     }
@@ -124,7 +126,6 @@ void free_map(hash_map_t *map) {
         while (map->buckets[i]->size) {
             map->free_entry(map->buckets[i]->head->data);
             ll_node_t *_to_free = remove_ll_nth_node(map->buckets[i], 0);
-            free(_to_free->data);
             free(_to_free);
         }
         free_ll(&map->buckets[i]);
