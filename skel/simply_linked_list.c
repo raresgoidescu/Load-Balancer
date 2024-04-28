@@ -8,7 +8,7 @@
 #include "utils.h"
 #include "simply_linked_list.h"
 
-linked_list_t *create_list(unsigned int data_size) {
+linked_list_t *create_ll(unsigned int data_size) {
     linked_list_t *list = malloc(sizeof(*list));
     DIE(!list, "Malloc failed");
     list->data_size = data_size;

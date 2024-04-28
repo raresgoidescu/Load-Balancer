@@ -2,7 +2,12 @@
  * Copyright (c) 2024, GOIDESCU Rares-Stefan 312CA <known.as.rares@gmail.com>
  */
 
+#ifndef __HASH_MAP__
+#define __HASH_MAP__
+
 #include <stdbool.h>
+
+#include "utils.h"
 
 #include "simply_linked_list.h"
 
@@ -12,7 +17,7 @@ typedef struct hash_map_t {
     /* Numarul de entry-uri */
     unsigned int size;
     /* Numarul maxim de bucket-uri */
-    unsigned int map_max_size;
+    unsigned int max_size;
     /* Functie care aplica un algoritm de hashing pe o cheie */
     unsigned int (*hash)(void *);
     /* Functie care compara doua chei */
@@ -63,3 +68,15 @@ void add_entry(hash_map_t *map,
  * @brief Functie care elimina un entry din dictionar
  */
 void remove_entry(hash_map_t *map, void *key);
+
+/**
+ * @brief Functie care elibereaza memoria folosita de un dictionar
+ */
+void free_map(hash_map_t *map);
+
+/**
+ * @brief Functie care afiseaza continutul unui dictionar cu (str, str)
+ */
+void print_map(hash_map_t *map, FILE *stream);
+
+#endif /* __HASH_MAP__ */
