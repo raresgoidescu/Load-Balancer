@@ -2,28 +2,12 @@
  * Copyright (c) 2024, GOIDESCU Rares-Stefan 312CA <known.as.rares@gmail.com>
  */
 
+#include "queue.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdbool.h>
 #include "utils.h"
-
-typedef struct q_node_t {
-    /* Pointer catre urmatorul nod din lista */
-    struct q_node_t *next;
-    void *data;
-} q_node_t;
-
-typedef struct queue_t {
-    /* Pointer catre primul element al listei */
-    q_node_t *front;
-    /* Pointer catre ultimul element al listei */
-    q_node_t *rear;
-    /* Numarul de octeti al unui element */
-    unsigned int data_size;
-    /* Numarul de elemente din coada */
-    unsigned int size;
-} queue_t;
 
 queue_t *q_create(unsigned int data_size)
 {

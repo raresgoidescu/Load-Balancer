@@ -4,6 +4,13 @@
 
 #include "utils.h"
 
+bool compare_strings(void *ptr1, void *ptr2) {
+    char *str1 = (char *)ptr1;
+    char *str2 = (char *)ptr2;
+
+    return strcmp(str1, str2);
+}
+
 unsigned int hash_uint(void *key)
 {
     unsigned int uint_key = *((unsigned int *)key);
