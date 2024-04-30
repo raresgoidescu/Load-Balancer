@@ -1,3 +1,12 @@
+/**
+ * @file queue.h
+ * @author GOIDESCU Rares-Stefan (known.as.rares@gmail.com)
+ * @date 2024-05-01
+ * 
+ * @copyright Copyright (c) 2024
+ * 
+ */
+
 #ifndef __QUEUE__
 #define __QUEUE__
 
@@ -44,7 +53,9 @@ ll_node_t *q_front(queue_t *q);
 bool q_is_empty(queue_t *q);
 
 /**
- * @brief Functie care elibereaza memoria folosita de o coada
+ * @brief Functie care elibereaza toata memoria folosita de o coada
+ * 
+ * @param queue 
  */
 void q_free(queue_t *queue);
 

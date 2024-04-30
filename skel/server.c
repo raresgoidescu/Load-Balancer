@@ -1,16 +1,21 @@
-/*
- * Copyright (c) 2024, GOIDESCU Rares-Stefan 312CA <known.as.rares@gmail.com>
+/**
+ * @file server.c
+ * @author GOIDESCU Rares-Stefan (known.as.rares@gmail.com)
+ * @date 2024-05-01
+ * 
+ * @copyright Copyright (c) 2024
+ * 
  */
 
 #include <stdio.h>
 #include "server.h"
 #include "lru_cache.h"
-
 #include "utils.h"
 
 static response
 *server_edit_document(server *s, char *doc_name, char *doc_content) {
     /* TODO */
+
     return NULL;
 }
 
