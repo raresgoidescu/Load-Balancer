@@ -10,10 +10,11 @@
 #ifndef LRU_CACHE_H
 #define LRU_CACHE_H
 
+#include "hash_map.h"
 #include <stdbool.h>
 
 typedef struct lru_cache {
-    /* TODO */
+    hash_map_t *data;
 } lru_cache;
 
 lru_cache *init_lru_cache(unsigned int cache_capacity);
