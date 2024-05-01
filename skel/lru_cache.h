@@ -10,11 +10,18 @@
 #ifndef LRU_CACHE_H
 #define LRU_CACHE_H
 
+#include "doubly_linked_list.h"
 #include "hash_map.h"
 #include <stdbool.h>
 
 typedef struct lru_cache {
+    doubly_linked_list_t *cache_order;
+    /*
+     * Dictionar pentru a retine entry-urile sub forma (key, val),
+     *  unde key - doc_name & val - doc_content
+     */
     hash_map_t *data;
+    unsigned int capacity;
 } lru_cache;
 
 lru_cache *init_lru_cache(unsigned int cache_capacity);

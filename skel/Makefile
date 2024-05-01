@@ -7,7 +7,7 @@ CACHE=lru_cache
 UTILS=utils
 
 # Add new source file names here:
-# EXTRA=<extra source file name>
+EXTRA=queue simply_linked_list hash_map doubly_linked_list
 
 .PHONY: build clean
 
@@ -31,8 +31,8 @@ $(CACHE).o: $(CACHE).c $(CACHE).h
 $(UTILS).o: $(UTILS).c $(UTILS).h
 	$(CC) $(CFLAGS) $^ -c
 
-# $(EXTRA).o: $(EXTRA).c $(EXTRA).h
-# 	$(CC) $(CFLAGS) $^ -c
+$(EXTRA).o: $(EXTRA).c $(EXTRA).h
+	$(CC) $(CFLAGS) $^ -c
 
 clean:
 	rm -f *.o tema2 *.h.gch

@@ -19,39 +19,12 @@ static response
 *server_edit_document(server *s, char *doc_name, char *doc_content) {
     response *exit_code = malloc(sizeof(*exit_code));
     DIE(!exit_code, "Malloc failed");
-
-    /*
-        is_doc_in_cache() {
-            MSG_B,
-            LOG_HIT,
-            modify_entry_in_cache_and_in_memory
-        } else {
-            is_doc_in_db() {
-                MSG_B,
-                put_doc_in_cache(),
-                modify_entry_in_cache_and_in_memory
-            } else {
-                MSG_C,
-                add_new_entry_in_cache_and_in_memory
-            }
-
-            is_cache_full() {
-                LOG_EVICT,
-                boom_one_entry_from_cache_and_move_it_to_memory
-            } else {
-                LOG_MISS,
-            }
-        }
-    */
-
+    
     // As zice sa fac cache-ul un hashmap in care tin pointeri catre documente
     // care se afla in momentul actual in cache
     // (key, val) = (doc_pointer, age_in_cache)
 
     if (has_key(s->cache->data, doc_name)) {
-        /// Sigur se vrea altceva de la mine la faza asta
-        exit_code->server_id = s->documents->hash(doc_name) % s->documents->max_size;
-
         strcpy(exit_code->server_log, MSG_B);
         strcpy(exit_code->server_response, LOG_HIT);
 
@@ -70,7 +43,9 @@ static response
 
         if (s->cache->data->size == s->cache->data->max_size) {
             strcpy(exit_code->server_log, LOG_EVICT);
-
+            char *oldest_doc_name;
+            // get_oldest_doc();
+            remove_entry(s->cache->data, oldest_doc_name);
             // boom oldest cached doc
         } else {
             strcpy(exit_code->server_log, LOG_MISS);

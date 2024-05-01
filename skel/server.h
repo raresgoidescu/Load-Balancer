@@ -21,6 +21,7 @@
 #define MAX_RESPONSE_LENGTH 4096
 
 typedef struct server {
+  int id;
   lru_cache *cache;
   hash_map_t *documents;
   queue_t *task_queue;
