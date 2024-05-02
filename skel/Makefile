@@ -52,4 +52,4 @@ $(QUEUE).o: $(QUEUE).c $(QUEUE).h
 	$(CC) $(CFLAGS) $^ -c
 
 clean:
-	rm -f *.o tema2 *.h.gch
+	rm -f *.o tema2 *.h.gch vgcore.*

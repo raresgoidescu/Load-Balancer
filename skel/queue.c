@@ -15,7 +15,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-queue_t *q_create(unsigned int data_size) {
+queue_t *q_create(unsigned int data_size, unsigned int max_size) {
     queue_t *q = malloc(sizeof(*q));
     DIE(!q, "Malloc failed");
 
@@ -23,13 +23,14 @@ queue_t *q_create(unsigned int data_size) {
     q->rear = NULL;
     q->data_size = data_size;
     q->size = 0;
+    q->max_size = max_size;
 
     return q;
 }
 
 void q_enqueue(queue_t *q, void *new_data) {
     if (!q)
-	return;
+	    return;
 
     ll_node_t *new_node = calloc(1, sizeof(*new_node));
     DIE(!new_node, "Calloc failed");
@@ -41,6 +42,7 @@ void q_enqueue(queue_t *q, void *new_data) {
 
     if (!q->rear) {
 	    q->front = q->rear = new_node;
+        q->size++;
 	    return;
     }
 
@@ -76,7 +78,8 @@ ll_node_t *q_front(queue_t *q) {
 
 bool q_is_empty(queue_t *q) { return (!q->size); }
 
-void q_free(queue_t *queue) {
+void q_free(queue_t **queue_ref) {
+    queue_t *queue = *queue_ref;
     if (!queue)
         return;
 
@@ -85,5 +88,5 @@ void q_free(queue_t *queue) {
     }
 
     free(queue);
-    queue = NULL;
+    *queue_ref = NULL;
 }

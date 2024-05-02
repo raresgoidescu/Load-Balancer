@@ -16,7 +16,7 @@
 #include "utils.h"
 
 lru_cache *init_lru_cache(unsigned int cache_capacity) {
-    lru_cache *cache = malloc(sizeof(lru_cache*));
+    lru_cache *cache = malloc(sizeof(*cache));
     DIE(!cache, "Malloc failed");
 
     cache->cache_order = create_dll(sizeof(void *));
@@ -39,12 +39,6 @@ void free_lru_cache(lru_cache **cache) {
     *cache = NULL;
 }
 
-/*
- * Hash-Map:
- *  (key, val) = (doc_name, (doc_content, ptr_to_dll_node));
- * Dll:
- *  data = ptr_to_key?
- */
 bool lru_cache_put(lru_cache *cache, void *key, void *value,
                    void **evicted_key) {
     if (has_key(cache->data, key))

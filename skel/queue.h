@@ -20,15 +20,17 @@ typedef struct queue_t {
     ll_node_t *rear;
     /* Numarul de octeti al unui element */
     unsigned int data_size;
-    /* Numarul de elemente din coada */
+    /* Numarul curent de elemente din coada */
     unsigned int size;
+    /* Numarul maxim de elemente din coada*/
+    unsigned int max_size;
 } queue_t;
 
 /**
  * @brief Functie care creeaza si initializeaza o coada
  * @return - (queue_t *) catre lista noii cozi
  */
-queue_t *q_create(unsigned int data_size);
+queue_t *q_create(unsigned int data_size, unsigned int max_size);
 
 /**
  * @brief Functie care adauga un element in coada
@@ -57,6 +59,6 @@ bool q_is_empty(queue_t *q);
  * 
  * @param queue 
  */
-void q_free(queue_t *queue);
+void q_free(queue_t **queue_ref);
 
 #endif /* __QUEUE__ */
