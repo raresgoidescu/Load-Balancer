@@ -83,6 +83,8 @@ void add_entry(hash_map_t *map, void *key, unsigned int key_size, void *val,
   memcpy(new_entry.val, val, val_size);
 
   add_ll_nth_node(curr_bucket, curr_bucket->size, &new_entry);
+
+  map->size++;
 }
 
 void remove_entry(hash_map_t *map, void *key) {

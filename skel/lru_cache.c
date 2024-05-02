@@ -7,19 +7,32 @@
  * 
  */
 
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "lru_cache.h"
+#include "constants.h"
 #include "doubly_linked_list.h"
 #include "hash_map.h"
+#include "simply_linked_list.h"
 #include "utils.h"
+
+typedef struct node_data_t {
+    char *doc_name;
+    char *doc_content;
+} node_data_t;
+
+/**
+ * NOTE: Hash-ul tine (doc_name, ptr_to_node)
+ *  Nodul tine (doc_name, doc_content)
+ */
 
 lru_cache *init_lru_cache(unsigned int cache_capacity) {
     lru_cache *cache = malloc(sizeof(*cache));
     DIE(!cache, "Malloc failed");
 
-    cache->cache_order = create_dll(sizeof(void *));
+    cache->cache_order = create_dll(sizeof(node_data_t));
     cache->data = create_hash_map(cache_capacity, hash_string, compare_strings, free_entry);
     cache->capacity = cache_capacity;
 
@@ -27,7 +40,7 @@ lru_cache *init_lru_cache(unsigned int cache_capacity) {
 }
 
 bool lru_cache_is_full(lru_cache *cache) {
-    if (cache->capacity == cache->cache_order->size)
+    if (cache->capacity == cache->data->size)
         return true;
     return false;
 }
@@ -39,18 +52,74 @@ void free_lru_cache(lru_cache **cache) {
     *cache = NULL;
 }
 
+
 bool lru_cache_put(lru_cache *cache, void *key, void *value,
                    void **evicted_key) {
     if (has_key(cache->data, key))
         return false;
+
+    void *evict = *evicted_key;
+
+    node_data_t *node_data = malloc(sizeof(*node_data));
+    DIE(!node_data, "Malloc failed");
+
+    node_data->doc_name = calloc(1, DOC_NAME_LENGTH + 1);
+    DIE(!node_data->doc_name, "Calloc failed");
+
+    node_data->doc_content = calloc(1, DOC_CONTENT_LENGTH + 1);
+    DIE(!node_data->doc_content, "Calloc failed");
+
+    memcpy(node_data->doc_name, key, DOC_NAME_LENGTH + 1);
+    memcpy(node_data->doc_content, value, DOC_CONTENT_LENGTH + 1);
+
+    if (lru_cache_is_full(cache)) {
+        dll_node_t *lru_doc =
+            remove_dll_nth_node(cache->cache_order, UINT_MAX);
+
+        node_data_t *lru_doc_data = (node_data_t *)lru_doc->data;
+
+        evict = calloc(1, DOC_NAME_LENGTH + 1);
+        DIE(!evict, "Calloc failed");
+
+        memcpy(evict, lru_doc_data->doc_name, DOC_NAME_LENGTH + 1);
+        
+        free(lru_doc_data->doc_content);
+        free(lru_doc_data->doc_name);
+        free(lru_doc->data);
+        free(lru_doc);
+
+        remove_entry(cache->data, evict);
+
+        add_dll_nth_node(cache->cache_order, 0, node_data);
+
+        add_entry(cache->data,
+                  key, DOC_NAME_LENGTH + 1,
+                  cache->cache_order->head, sizeof(dll_node_t *));
+    } else {
+        add_dll_nth_node(cache->cache_order, 0, node_data);
+        add_entry(cache->data,
+                  key, DOC_NAME_LENGTH + 1,
+                  cache->cache_order->head, sizeof(dll_node_t *));
+        evict = NULL;
+    }
+
+    free(node_data->doc_content);
+    free(node_data->doc_name);
+    free(node_data);
+
+    *evicted_key = evict;
     return true;
 }
 
 void *lru_cache_get(lru_cache *cache, void *key) {
-    /* TODO */
+    dll_node_t *cached_doc = (dll_node_t *)get_value(cache->data, key);
+    if (cached_doc) {
+        node_data_t *node_data = (node_data_t *)cached_doc->data;
+        return node_data->doc_content;
+    }
     return NULL;
 }
 
 void lru_cache_remove(lru_cache *cache, void *key) {
-    /* TODO */
+    remove_entry(cache->data, key);
 }

@@ -79,29 +79,32 @@ static response
             sprintf(exit_code->server_response, MSG_C, doc_name);
             sprintf(exit_code->server_log, LOG_MISS, doc_name);
             
-            add_entry(s->cache->data,
-                      doc_name, DOC_NAME_LENGTH + 1,
-                      doc_content, DOC_CONTENT_LENGTH + 1);
-
             add_entry(s->documents,
                       doc_name, DOC_NAME_LENGTH + 1,
                       doc_content, DOC_CONTENT_LENGTH + 1);
-
-            printf(GENERIC_MSG, exit_code->server_id,
-                   exit_code->server_response, exit_code->server_id,
-                   exit_code->server_log);
         }
 
-        if (s->cache->data->size == s->cache->data->max_size) {
-            /** TODO: **/
+        if (lru_cache_is_full(s->cache)) {
+            add_entry(s->cache->data,
+                      doc_name, DOC_NAME_LENGTH + 1,
+                      doc_content, DOC_CONTENT_LENGTH + 1);
             char *oldest_doc_name = "hahalol";
             // get_oldest_doc();
             sprintf(exit_code->server_log,
                     LOG_EVICT, doc_name, oldest_doc_name);
+            printf(GENERIC_MSG, exit_code->server_id,
+                   exit_code->server_response, exit_code->server_id,
+                   exit_code->server_log);
             // remove_entry(s->cache->data, oldest_doc_name);
             // boom oldest cached doc
         } else {
+            add_entry(s->cache->data,
+                      doc_name, DOC_NAME_LENGTH + 1,
+                      doc_content, DOC_CONTENT_LENGTH + 1);
             sprintf(exit_code->server_log, LOG_MISS, doc_name);
+            printf(GENERIC_MSG, exit_code->server_id,
+                   exit_code->server_response, exit_code->server_id,
+                   exit_code->server_log);
         }
     }
 
@@ -121,18 +124,21 @@ static response
             char *doc_content = (char *)get_value(s->documents, doc_name);
             sprintf(exit_code->server_response, "%s", doc_content);
             /* put doc in cache */
-            add_entry(s->cache->data,
-                      doc_name, DOC_NAME_LENGTH + 1,
-                      doc_content, DOC_CONTENT_LENGTH + 1);
-            if (s->cache->data->size == s->cache->data->max_size) {
+            if (lru_cache_is_full(s->cache)) {
                 /** TODO: **/
                 char *oldest_doc_name = "za goochcoolen";
                 // get oldest doc
                 sprintf(exit_code->server_log,
                         LOG_EVICT, doc_name, oldest_doc_name);
                 // remove entries
+                add_entry(s->cache->data,
+                          doc_name, DOC_NAME_LENGTH + 1,
+                          doc_content, DOC_CONTENT_LENGTH + 1);
             } else {
                 sprintf(exit_code->server_log, LOG_MISS, doc_name);
+                add_entry(s->cache->data,
+                          doc_name, DOC_NAME_LENGTH + 1,
+                          doc_content, DOC_CONTENT_LENGTH + 1);
             }
         } else {
             sprintf(exit_code->server_response, "%s", "(null)");
