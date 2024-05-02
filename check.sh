@@ -177,5 +177,5 @@ echo ""
 checkBonus
 printBonus
 
-rm -rf out
+# rm -rf out
 rm -rf tema2

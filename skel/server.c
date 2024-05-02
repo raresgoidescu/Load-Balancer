@@ -18,6 +18,10 @@
 #include "simply_linked_list.h"
 #include "utils.h"
 
+/******************************************************************************/
+/***************************** PRIVATE FUNCTIONS ******************************/
+/******************************************************************************/
+
 static
 response *alloc_response(unsigned int resp_lenght, unsigned int log_lenght) {
     response *ptr = malloc(sizeof(*ptr));
@@ -37,17 +41,24 @@ response *alloc_response(unsigned int resp_lenght, unsigned int log_lenght) {
 static response
 *server_edit_document(server *s, char *doc_name, char *doc_content) {
     response *exit_code = alloc_response(MAX_RESPONSE_LENGTH, MAX_LOG_LENGTH);
+    exit_code->server_id = s->id;
 
     if (has_key(s->cache->data, doc_name)) {
         sprintf(exit_code->server_log, LOG_HIT, doc_name);
         sprintf(exit_code->server_response, MSG_B, doc_name);
 
         /* modify entry in cache and in db */
-        char *cached_doc_content = (char *)get_value(s->cache->data, doc_name);
+        char *cached_doc_content =
+            (char *)get_value(s->cache->data, doc_name);
         memcpy(cached_doc_content, doc_content, DOC_CONTENT_LENGTH + 1);
 
-        char *peristent_doc_content = (char *)get_value(s->documents, doc_name);
+        char *peristent_doc_content =
+            (char *)get_value(s->documents, doc_name);
         memcpy(peristent_doc_content, doc_content, DOC_CONTENT_LENGTH + 1);
+
+        printf(GENERIC_MSG, exit_code->server_id,
+               exit_code->server_response, exit_code->server_id,
+               exit_code->server_log);
     } else {
         if (has_key(s->documents, doc_name)) {
             sprintf(exit_code->server_response, MSG_B, doc_name);
@@ -58,10 +69,15 @@ static response
                       doc_content, DOC_CONTENT_LENGTH + 1);
 
             /* modify entry */
-            char *persistent_doc_content = (char *)get_value(s->documents, doc_name);
-            memcpy(persistent_doc_content, doc_content, DOC_CONTENT_LENGTH + 1);
+            char *db_doc_content =
+                (char *)get_value(s->documents, doc_name);
+            memcpy(db_doc_content, doc_content, DOC_CONTENT_LENGTH + 1);
+            printf(GENERIC_MSG, exit_code->server_id,
+                   exit_code->server_response, exit_code->server_id,
+                   exit_code->server_log);
         } else {
             sprintf(exit_code->server_response, MSG_C, doc_name);
+            sprintf(exit_code->server_log, LOG_MISS, doc_name);
             
             add_entry(s->cache->data,
                       doc_name, DOC_NAME_LENGTH + 1,
@@ -70,12 +86,18 @@ static response
             add_entry(s->documents,
                       doc_name, DOC_NAME_LENGTH + 1,
                       doc_content, DOC_CONTENT_LENGTH + 1);
+
+            printf(GENERIC_MSG, exit_code->server_id,
+                   exit_code->server_response, exit_code->server_id,
+                   exit_code->server_log);
         }
 
         if (s->cache->data->size == s->cache->data->max_size) {
+            /** TODO: **/
             char *oldest_doc_name = "hahalol";
             // get_oldest_doc();
-            sprintf(exit_code->server_log, LOG_EVICT, doc_name, oldest_doc_name);
+            sprintf(exit_code->server_log,
+                    LOG_EVICT, doc_name, oldest_doc_name);
             // remove_entry(s->cache->data, oldest_doc_name);
             // boom oldest cached doc
         } else {
@@ -91,7 +113,8 @@ static response
     response *exit_code = alloc_response(MAX_RESPONSE_LENGTH, MAX_LOG_LENGTH);
 
     if (has_key(s->cache->data, doc_name)) {
-        sprintf(exit_code->server_response, "%s", (char *)get_value(s->cache->data, doc_name));
+        sprintf(exit_code->server_response,
+                "%s", (char *)get_value(s->cache->data, doc_name));
         sprintf(exit_code->server_log, LOG_HIT, doc_name);
     } else {
         if (has_key(s->documents, doc_name)) {
@@ -101,30 +124,36 @@ static response
             add_entry(s->cache->data,
                       doc_name, DOC_NAME_LENGTH + 1,
                       doc_content, DOC_CONTENT_LENGTH + 1);
+            if (s->cache->data->size == s->cache->data->max_size) {
+                /** TODO: **/
+                char *oldest_doc_name = "za goochcoolen";
+                // get oldest doc
+                sprintf(exit_code->server_log,
+                        LOG_EVICT, doc_name, oldest_doc_name);
+                // remove entries
+            } else {
+                sprintf(exit_code->server_log, LOG_MISS, doc_name);
+            }
         } else {
             sprintf(exit_code->server_response, "%s", "(null)");
             sprintf(exit_code->server_log, LOG_FAULT, doc_name);
-        }
-
-        if (s->cache->data->size == s->cache->data->max_size) {
-            char *oldest_doc_name = "za goochcoolen";
-            // get oldest doc
-            sprintf(exit_code->server_log, LOG_EVICT, doc_name, oldest_doc_name);
-            // remove entries
-        } else {
-            sprintf(exit_code->server_log, LOG_MISS, doc_name);
         }
     }
 
     return exit_code;
 }
 
+/******************************************************************************/
+/***************************** PUBLIC FUNCTIONS *******************************/
+/******************************************************************************/
+
 server *init_server(unsigned int cache_size) {
     server *sv = malloc(sizeof(*sv));
     DIE(!sv, "Malloc failed");
 
     sv->cache = init_lru_cache(cache_size);
-    sv->documents = create_hash_map(10, hash_string, compare_strings, free_entry);
+    sv->documents =
+        create_hash_map(100, hash_string, compare_strings, free_entry);
     sv->task_queue = q_create(sizeof(request), TASK_QUEUE_SIZE);
 
     return sv;
@@ -160,7 +189,7 @@ response *server_handle_request(server *s, request *req) {
     sprintf(exit_code->server_response, MSG_A, operation, req->doc_name);
     sprintf(exit_code->server_log, LOG_LAZY_EXEC, s->task_queue->size);
 
-    if (!strcmp(operation, "GET")) {
+    if (req->type == GET_DOCUMENT) {
         while (!q_is_empty(s->task_queue)) {
             ll_node_t *front = q_front(s->task_queue);
             request *curr_req = (request *)front->data;
@@ -169,18 +198,22 @@ response *server_handle_request(server *s, request *req) {
             char *doc_content = curr_req->doc_content;
 
             if (curr_req->type == GET_DOCUMENT) {
-                puts("GET");
-                response *get_exit_code = server_get_document(s, doc_name);
-                sprintf(exit_code->server_response, "%s", get_exit_code->server_response);
-                sprintf(exit_code->server_log, "%s", get_exit_code->server_log);
+                response *get_exit_code =
+                    server_get_document(s, doc_name);
+                sprintf(exit_code->server_response,
+                        "%s", get_exit_code->server_response);
+                sprintf(exit_code->server_log,
+                        "%s", get_exit_code->server_log);
                 free(get_exit_code->server_response);
                 free(get_exit_code->server_log);
                 free(get_exit_code);
             } else {
-                puts("EDIT");
-                response *edit_exit_code = server_edit_document(s, doc_name, doc_content);
-                sprintf(exit_code->server_response, "%s", edit_exit_code->server_response);
-                sprintf(exit_code->server_log, "%s", edit_exit_code->server_log);
+                response *edit_exit_code =
+                    server_edit_document(s, doc_name, doc_content);
+                sprintf(exit_code->server_response,
+                        "%s", edit_exit_code->server_response);
+                sprintf(exit_code->server_log,
+                        "%s", edit_exit_code->server_log);
                 free(edit_exit_code->server_response);
                 free(edit_exit_code->server_log);
                 free(edit_exit_code);
