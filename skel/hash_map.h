@@ -10,10 +10,11 @@
 #ifndef __HASH_MAP__
 #define __HASH_MAP__
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <stdbool.h>
-
 #include "utils.h"
-
 #include "simply_linked_list.h"
 
 typedef struct hash_map_t {
@@ -77,7 +78,7 @@ void remove_entry(hash_map_t *map, void *key);
 /**
  * @brief Functie care elibereaza memoria folosita de un dictionar
  */
-void free_map(hash_map_t *map);
+void free_map(hash_map_t **map_ref);
 
 /**
  * @brief Functie care afiseaza continutul unui dictionar cu (str, str)

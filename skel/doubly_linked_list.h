@@ -10,6 +10,11 @@
 #ifndef __DOUBLY_LL__
 #define __DOUBLY_LL__
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include "utils.h"
+
 typedef struct dll_node_t {
     struct dll_node_t *prev;
     void *data;

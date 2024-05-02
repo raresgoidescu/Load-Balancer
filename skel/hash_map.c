@@ -6,14 +6,8 @@
  * @copyright Copyright (c) 2024
  * 
  */
-#include "utils.h"
-#include <stdbool.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 
 #include "hash_map.h"
-#include "simply_linked_list.h"
 
 void free_entry(void *entry_ptr) {
   entry_t *entry = entry_ptr;
@@ -124,7 +118,8 @@ void remove_entry(hash_map_t *map, void *key) {
   }
 }
 
-void free_map(hash_map_t *map) {
+void free_map(hash_map_t **map_ref) {
+  hash_map_t *map = *map_ref;
   for (unsigned int i = 0; i < map->max_size; ++i) {
     while (map->buckets[i]->size) {
       map->free_entry(map->buckets[i]->head->data);
@@ -135,6 +130,7 @@ void free_map(hash_map_t *map) {
   }
   free(map->buckets);
   free(map);
+  *map_ref = NULL;
 }
 
 void print_map(hash_map_t *map, FILE *stream) {

@@ -8,28 +8,48 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include "lru_cache.h"
+#include "doubly_linked_list.h"
+#include "hash_map.h"
 #include "utils.h"
 
 lru_cache *init_lru_cache(unsigned int cache_capacity) {
-    /* TODO */
-    return NULL;
+    lru_cache *cache = malloc(sizeof(lru_cache*));
+    DIE(!cache, "Malloc failed");
+
+    cache->cache_order = create_dll(sizeof(void *));
+    cache->data = create_hash_map(cache_capacity, hash_string, compare_strings, free_entry);
+    cache->capacity = cache_capacity;
+
+    return cache;
 }
 
 bool lru_cache_is_full(lru_cache *cache) {
-    /* TODO */
+    if (cache->capacity == cache->cache_order->size)
+        return true;
     return false;
 }
 
 void free_lru_cache(lru_cache **cache) {
-    /* TODO */
+    free_dll(&(*cache)->cache_order);
+    free_map(&(*cache)->data);
+    free(*cache);
+    *cache = NULL;
 }
 
+/*
+ * Hash-Map:
+ *  (key, val) = (doc_name, (doc_content, ptr_to_dll_node));
+ * Dll:
+ *  data = ptr_to_key?
+ */
 bool lru_cache_put(lru_cache *cache, void *key, void *value,
                    void **evicted_key) {
-    /* TODO */
-    return false;
+    if (has_key(cache->data, key))
+        return false;
+    return true;
 }
 
 void *lru_cache_get(lru_cache *cache, void *key) {

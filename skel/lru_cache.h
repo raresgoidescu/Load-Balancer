@@ -15,10 +15,13 @@
 #include <stdbool.h>
 
 typedef struct lru_cache {
+    /*
+     * Lista dublu inlantuita pentru a retine documentele din cache
+     */
     doubly_linked_list_t *cache_order;
     /*
      * Dictionar pentru a retine entry-urile sub forma (key, val),
-     *  unde key - doc_name & val - doc_content
+     *  unde key - doc_name & val - pointer catre documentul din cache
      */
     hash_map_t *data;
     unsigned int capacity;

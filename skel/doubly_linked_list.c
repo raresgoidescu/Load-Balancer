@@ -7,11 +7,7 @@
  * 
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include "doubly_linked_list.h"
-#include "utils.h"
 
 doubly_linked_list_t *create_dll(unsigned int data_size) {
     doubly_linked_list_t *list = malloc(sizeof(*list));
