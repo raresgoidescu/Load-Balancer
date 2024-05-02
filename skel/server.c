@@ -18,31 +18,58 @@
 #include "simply_linked_list.h"
 #include "utils.h"
 
+static
+response *alloc_response(unsigned int resp_lenght, unsigned int log_lenght) {
+    response *ptr = malloc(sizeof(*ptr));
+    DIE(!ptr, "Malloc failed");
+
+    ptr->server_response = calloc(1, resp_lenght + 1);
+    DIE(!ptr->server_response, "Calloc failed");
+
+    ptr->server_log = calloc(1, log_lenght + 1);
+    DIE(!ptr->server_log, "Calloc failed");
+
+    ptr->server_id = 0;
+
+    return ptr;
+}
+
 static response
 *server_edit_document(server *s, char *doc_name, char *doc_content) {
-    response *exit_code = malloc(sizeof(*exit_code));
-    DIE(!exit_code, "Malloc failed");
-
-    exit_code->server_response = calloc(1, DOC_CONTENT_LENGTH + 1);
-    DIE(!exit_code->server_response, "Calloc failed");
-
-    exit_code->server_log = calloc(1, strlen(LOG_EVICT) + 2 * DOC_NAME_LENGTH);
-    DIE(!exit_code->server_log, "Calloc failed");
+    response *exit_code = alloc_response(MAX_RESPONSE_LENGTH, MAX_LOG_LENGTH);
 
     if (has_key(s->cache->data, doc_name)) {
         sprintf(exit_code->server_log, LOG_HIT, doc_name);
         sprintf(exit_code->server_response, MSG_B, doc_name);
 
-        // modify entry in cache and in db
+        /* modify entry in cache and in db */
+        char *cached_doc_content = (char *)get_value(s->cache->data, doc_name);
+        memcpy(cached_doc_content, doc_content, DOC_CONTENT_LENGTH + 1);
+
+        char *peristent_doc_content = (char *)get_value(s->documents, doc_name);
+        memcpy(peristent_doc_content, doc_content, DOC_CONTENT_LENGTH + 1);
     } else {
         if (has_key(s->documents, doc_name)) {
             sprintf(exit_code->server_response, MSG_B, doc_name);
 
-            // put doc in cache
-            // modify entry
+            /* put doc in cache */
+            add_entry(s->cache->data,
+                      doc_name, DOC_NAME_LENGTH + 1,
+                      doc_content, DOC_CONTENT_LENGTH + 1);
+
+            /* modify entry */
+            char *persistent_doc_content = (char *)get_value(s->documents, doc_name);
+            memcpy(persistent_doc_content, doc_content, DOC_CONTENT_LENGTH + 1);
         } else {
             sprintf(exit_code->server_response, MSG_C, doc_name);
-            // add entry in cache and db
+            
+            add_entry(s->cache->data,
+                      doc_name, DOC_NAME_LENGTH + 1,
+                      doc_content, DOC_CONTENT_LENGTH + 1);
+
+            add_entry(s->documents,
+                      doc_name, DOC_NAME_LENGTH + 1,
+                      doc_content, DOC_CONTENT_LENGTH + 1);
         }
 
         if (s->cache->data->size == s->cache->data->max_size) {
@@ -61,8 +88,35 @@ static response
 
 static response
 *server_get_document(server *s, char *doc_name) {
-    /* TODO */
-    return NULL;
+    response *exit_code = alloc_response(MAX_RESPONSE_LENGTH, MAX_LOG_LENGTH);
+
+    if (has_key(s->cache->data, doc_name)) {
+        sprintf(exit_code->server_response, "%s", (char *)get_value(s->cache->data, doc_name));
+        sprintf(exit_code->server_log, LOG_HIT, doc_name);
+    } else {
+        if (has_key(s->documents, doc_name)) {
+            char *doc_content = (char *)get_value(s->documents, doc_name);
+            sprintf(exit_code->server_response, "%s", doc_content);
+            /* put doc in cache */
+            add_entry(s->cache->data,
+                      doc_name, DOC_NAME_LENGTH + 1,
+                      doc_content, DOC_CONTENT_LENGTH + 1);
+        } else {
+            sprintf(exit_code->server_response, "%s", "(null)");
+            sprintf(exit_code->server_log, LOG_FAULT, doc_name);
+        }
+
+        if (s->cache->data->size == s->cache->data->max_size) {
+            char *oldest_doc_name = "za goochcoolen";
+            // get oldest doc
+            sprintf(exit_code->server_log, LOG_EVICT, doc_name, oldest_doc_name);
+            // remove entries
+        } else {
+            sprintf(exit_code->server_log, LOG_MISS, doc_name);
+        }
+    }
+
+    return exit_code;
 }
 
 server *init_server(unsigned int cache_size) {
@@ -71,46 +125,71 @@ server *init_server(unsigned int cache_size) {
 
     sv->cache = init_lru_cache(cache_size);
     sv->documents = create_hash_map(10, hash_string, compare_strings, free_entry);
-    sv->task_queue = q_create(REQUEST_LENGTH, TASK_QUEUE_SIZE);
+    sv->task_queue = q_create(sizeof(request), TASK_QUEUE_SIZE);
 
     return sv;
 }
 
 response *server_handle_request(server *s, request *req) {
-    response *exit_code = malloc(sizeof(*exit_code));
-    DIE(!exit_code, "Malloc failed\n");
-
-    exit_code->server_response = calloc(1, DOC_CONTENT_LENGTH + 1);
-    DIE(!exit_code->server_response, "Calloc failed");
-
-    exit_code->server_log = calloc(1, strlen(LOG_EVICT) + 2 * DOC_NAME_LENGTH);
-    DIE(!exit_code->server_log, "Calloc failed");
+    response *exit_code = alloc_response(MAX_RESPONSE_LENGTH, MAX_LOG_LENGTH);
 
     exit_code->server_id = s->id;
 
-    if (req->type == EDIT_DOCUMENT) {
-        q_enqueue(s->task_queue, req);
-        sprintf(exit_code->server_response, MSG_A, "EDIT", req->doc_name);
-        sprintf(exit_code->server_log, LOG_LAZY_EXEC, s->task_queue->size);
-    } else {
-        request *curr_req = NULL;
+    char *req_doc_name = calloc(1, DOC_NAME_LENGTH + 1);
+    DIE(!req_doc_name, "Calloc failed");
+    memcpy(req_doc_name, req->doc_name, DOC_NAME_LENGTH + 1);
 
+    char *req_doc_content = calloc(1, DOC_CONTENT_LENGTH + 1);
+    DIE(!req_doc_content, "Calloc failed");
+
+    if (req->doc_content)
+        memcpy(req_doc_content, req->doc_content, DOC_CONTENT_LENGTH + 1);
+
+    request *my_req = calloc(1, sizeof(*my_req));
+    DIE(!my_req, "Malloc failed");
+
+    my_req->type = req->type;
+    my_req->doc_name = req_doc_name;
+    my_req->doc_content = req_doc_content;
+
+    q_enqueue(s->task_queue, my_req);
+
+    free(my_req);
+
+    char *operation = (req->type == EDIT_DOCUMENT) ? "EDIT" : "GET";
+    sprintf(exit_code->server_response, MSG_A, operation, req->doc_name);
+    sprintf(exit_code->server_log, LOG_LAZY_EXEC, s->task_queue->size);
+
+    if (!strcmp(operation, "GET")) {
         while (!q_is_empty(s->task_queue)) {
             ll_node_t *front = q_front(s->task_queue);
-            curr_req = (request *)front->data;
+            request *curr_req = (request *)front->data;
 
-            char *req_type = get_request_type_str(curr_req->type);
+            char *doc_name = curr_req->doc_name;
+            char *doc_content = curr_req->doc_content;
 
-            printf("Current req type:\t%s\ndoc_name:\t%s\ndoc_content:\t%s\n", req_type, curr_req->doc_name, curr_req->doc_content);
+            if (curr_req->type == GET_DOCUMENT) {
+                puts("GET");
+                response *get_exit_code = server_get_document(s, doc_name);
+                sprintf(exit_code->server_response, "%s", get_exit_code->server_response);
+                sprintf(exit_code->server_log, "%s", get_exit_code->server_log);
+                free(get_exit_code->server_response);
+                free(get_exit_code->server_log);
+                free(get_exit_code);
+            } else {
+                puts("EDIT");
+                response *edit_exit_code = server_edit_document(s, doc_name, doc_content);
+                sprintf(exit_code->server_response, "%s", edit_exit_code->server_response);
+                sprintf(exit_code->server_log, "%s", edit_exit_code->server_log);
+                free(edit_exit_code->server_response);
+                free(edit_exit_code->server_log);
+                free(edit_exit_code);
+            }
+
+            free(doc_name);
+            free(doc_content);
             
             q_dequeue(s->task_queue);
-        }
-        if (curr_req) {
-            sprintf(exit_code->server_response, "%s", curr_req->doc_content);
-            sprintf(exit_code->server_log, LOG_HIT, req->doc_name);
-        } else {
-            sprintf(exit_code->server_response, "(null)");
-            sprintf(exit_code->server_log, LOG_FAULT, req->doc_name);
         }
     }
 
@@ -118,7 +197,22 @@ response *server_handle_request(server *s, request *req) {
 }
 
 void free_server(server **s) {
-    free_map(&(*s)->documents);
-    free_lru_cache(&(*s)->cache);
-    q_free(&(*s)->task_queue);
+    server *server = *s;
+
+    free_map(&server->documents);
+
+    free_lru_cache(&server->cache);
+
+    queue_t *queue = server->task_queue;
+    if (queue) {
+        while (!q_is_empty(queue)) {
+            q_dequeue(queue);
+        }
+    }
+
+    free(queue);
+    server->task_queue = NULL;
+
+    free(server);
+    *s = NULL;
 }
