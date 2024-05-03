@@ -8,6 +8,7 @@
  */
 
 #include "hash_map.h"
+#include <stdio.h>
 
 void free_entry(void *entry_ptr) {
   entry_t *entry = entry_ptr;

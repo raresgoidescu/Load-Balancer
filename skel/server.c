@@ -48,8 +48,7 @@ static response
         sprintf(exit_code->server_response, MSG_B, doc_name);
 
         /* modify entry in cache and in db */
-        char *cached_doc_content =
-            (char *)get_value(s->cache->data, doc_name);
+        char *cached_doc_content = (char *)lru_cache_get(s->cache, doc_name);
         memcpy(cached_doc_content, doc_content, DOC_CONTENT_LENGTH + 1);
 
         char *peristent_doc_content =
@@ -62,11 +61,6 @@ static response
     } else {
         if (has_key(s->documents, doc_name)) {
             sprintf(exit_code->server_response, MSG_B, doc_name);
-
-            /* put doc in cache */
-            add_entry(s->cache->data,
-                      doc_name, DOC_NAME_LENGTH + 1,
-                      doc_content, DOC_CONTENT_LENGTH + 1);
 
             /* modify entry */
             char *db_doc_content =
@@ -85,22 +79,17 @@ static response
         }
 
         if (lru_cache_is_full(s->cache)) {
-            add_entry(s->cache->data,
-                      doc_name, DOC_NAME_LENGTH + 1,
-                      doc_content, DOC_CONTENT_LENGTH + 1);
-            char *oldest_doc_name = "hahalol";
+            void *oldest_doc_name;
+            lru_cache_put(s->cache, doc_name, doc_content, &oldest_doc_name);
             // get_oldest_doc();
             sprintf(exit_code->server_log,
-                    LOG_EVICT, doc_name, oldest_doc_name);
+                    LOG_EVICT, doc_name, (char *)oldest_doc_name);
             printf(GENERIC_MSG, exit_code->server_id,
                    exit_code->server_response, exit_code->server_id,
                    exit_code->server_log);
-            // remove_entry(s->cache->data, oldest_doc_name);
-            // boom oldest cached doc
         } else {
-            add_entry(s->cache->data,
-                      doc_name, DOC_NAME_LENGTH + 1,
-                      doc_content, DOC_CONTENT_LENGTH + 1);
+            void *dummy;
+            lru_cache_put(s->cache, doc_name, doc_content, &dummy);
             sprintf(exit_code->server_log, LOG_MISS, doc_name);
             printf(GENERIC_MSG, exit_code->server_id,
                    exit_code->server_response, exit_code->server_id,
@@ -116,8 +105,8 @@ static response
     response *exit_code = alloc_response(MAX_RESPONSE_LENGTH, MAX_LOG_LENGTH);
 
     if (has_key(s->cache->data, doc_name)) {
-        sprintf(exit_code->server_response,
-                "%s", (char *)get_value(s->cache->data, doc_name));
+        char *doc_content = (char *)lru_cache_get(s->cache, doc_name);
+        sprintf(exit_code->server_response, "%s", doc_content);
         sprintf(exit_code->server_log, LOG_HIT, doc_name);
     } else {
         if (has_key(s->documents, doc_name)) {
@@ -125,20 +114,14 @@ static response
             sprintf(exit_code->server_response, "%s", doc_content);
             /* put doc in cache */
             if (lru_cache_is_full(s->cache)) {
-                /** TODO: **/
-                char *oldest_doc_name = "za goochcoolen";
-                // get oldest doc
+                void *oldest_doc_name;
+                lru_cache_put(s->cache, doc_name, doc_content, &oldest_doc_name);
                 sprintf(exit_code->server_log,
-                        LOG_EVICT, doc_name, oldest_doc_name);
-                // remove entries
-                add_entry(s->cache->data,
-                          doc_name, DOC_NAME_LENGTH + 1,
-                          doc_content, DOC_CONTENT_LENGTH + 1);
+                        LOG_EVICT, doc_name, (char *)oldest_doc_name);
             } else {
                 sprintf(exit_code->server_log, LOG_MISS, doc_name);
-                add_entry(s->cache->data,
-                          doc_name, DOC_NAME_LENGTH + 1,
-                          doc_content, DOC_CONTENT_LENGTH + 1);
+                void *dummy;
+                lru_cache_put(s->cache, doc_name, doc_content, &dummy);
             }
         } else {
             sprintf(exit_code->server_response, "%s", "(null)");

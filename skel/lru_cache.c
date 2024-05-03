@@ -15,7 +15,6 @@
 #include "constants.h"
 #include "doubly_linked_list.h"
 #include "hash_map.h"
-#include "simply_linked_list.h"
 #include "utils.h"
 
 typedef struct node_data_t {
@@ -24,6 +23,7 @@ typedef struct node_data_t {
 } node_data_t;
 
 /**
+ * TODO: Bug-ul pare sa fie la adaugare, nu la get
  * NOTE: Hash-ul tine (doc_name, ptr_to_node)
  *  Nodul tine (doc_name, doc_content)
  */
@@ -103,6 +103,7 @@ bool lru_cache_put(lru_cache *cache, void *key, void *value,
         evict = NULL;
     }
 
+    /* Aici este buba :D */
     free(node_data->doc_content);
     free(node_data->doc_name);
     free(node_data);
@@ -112,12 +113,13 @@ bool lru_cache_put(lru_cache *cache, void *key, void *value,
 }
 
 void *lru_cache_get(lru_cache *cache, void *key) {
-    dll_node_t *cached_doc = (dll_node_t *)get_value(cache->data, key);
-    if (cached_doc) {
-        node_data_t *node_data = (node_data_t *)cached_doc->data;
-        return node_data->doc_content;
-    }
-    return NULL;
+    dll_node_t *node = *(dll_node_t **)get_value(cache->data, key);
+    if (!node)
+        return NULL;
+
+    node_data_t *node_data = (node_data_t *)node->data;
+
+    return node_data->doc_content;
 }
 
 void lru_cache_remove(lru_cache *cache, void *key) {
