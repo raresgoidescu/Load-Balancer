@@ -22,12 +22,6 @@ typedef struct node_data_t {
     char *doc_content;
 } node_data_t;
 
-/**
- * TODO: Bug-ul pare sa fie la adaugare, nu la get
- * NOTE: Hash-ul tine (doc_name, ptr_to_node)
- *  Nodul tine (doc_name, doc_content)
- */
-
 lru_cache *init_lru_cache(unsigned int cache_capacity) {
     lru_cache *cache = malloc(sizeof(*cache));
     DIE(!cache, "Malloc failed");
@@ -52,7 +46,6 @@ void free_lru_cache(lru_cache **cache) {
     *cache = NULL;
 }
 
-
 bool lru_cache_put(lru_cache *cache, void *key, void *value,
                    void **evicted_key) {
     if (has_key(cache->data, key))
@@ -60,27 +53,21 @@ bool lru_cache_put(lru_cache *cache, void *key, void *value,
 
     void *evict = *evicted_key;
 
-    node_data_t *node_data = malloc(sizeof(*node_data));
-    DIE(!node_data, "Malloc failed");
+    /* Iau o structura auxiliara */
+    node_data_t doc_data;
+    doc_data.doc_name = key;
+    doc_data.doc_content = value;
 
-    node_data->doc_name = calloc(1, DOC_NAME_LENGTH + 1);
-    DIE(!node_data->doc_name, "Calloc failed");
-
-    node_data->doc_content = calloc(1, DOC_CONTENT_LENGTH + 1);
-    DIE(!node_data->doc_content, "Calloc failed");
-
-    memcpy(node_data->doc_name, key, DOC_NAME_LENGTH + 1);
-    memcpy(node_data->doc_content, value, DOC_CONTENT_LENGTH + 1);
-
+    /* Daca e full cache-ul scot LRU doc din cache si adaug noul document */
     if (lru_cache_is_full(cache)) {
         dll_node_t *lru_doc =
             remove_dll_nth_node(cache->cache_order, UINT_MAX);
 
         node_data_t *lru_doc_data = (node_data_t *)lru_doc->data;
 
+        /* Tin minte numele documentului scos din cache */
         evict = calloc(1, DOC_NAME_LENGTH + 1);
         DIE(!evict, "Calloc failed");
-
         memcpy(evict, lru_doc_data->doc_name, DOC_NAME_LENGTH + 1);
         
         free(lru_doc_data->doc_content);
@@ -89,14 +76,14 @@ bool lru_cache_put(lru_cache *cache, void *key, void *value,
         free(lru_doc);
 
         remove_entry(cache->data, evict);
-
-        add_dll_nth_node(cache->cache_order, 0, node_data);
+        /* Adaug in cache continutul structurii auxiliare */
+        add_dll_nth_node(cache->cache_order, 0, &doc_data);
 
         add_entry(cache->data,
                   key, DOC_NAME_LENGTH + 1,
                   cache->cache_order->head, sizeof(dll_node_t *));
     } else {
-        add_dll_nth_node(cache->cache_order, 0, node_data);
+        add_dll_nth_node(cache->cache_order, 0, &doc_data);
         add_entry(cache->data,
                   key, DOC_NAME_LENGTH + 1,
                   cache->cache_order->head, sizeof(dll_node_t *));
@@ -104,9 +91,9 @@ bool lru_cache_put(lru_cache *cache, void *key, void *value,
     }
 
     /* Aici este buba :D */
-    free(node_data->doc_content);
-    free(node_data->doc_name);
-    free(node_data);
+    //free(node_data->doc_content);
+    //free(node_data->doc_name);
+    //free(node_data);
 
     *evicted_key = evict;
     return true;
