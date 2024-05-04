@@ -8,7 +8,9 @@
  */
 
 #include "hash_map.h"
+#include "simply_linked_list.h"
 #include <stdio.h>
+#include <string.h>
 
 void free_entry(void *entry_ptr) {
   entry_t *entry = entry_ptr;
@@ -138,6 +140,22 @@ void free_map(hash_map_t **map_ref) {
   free(map->buckets);
   free(map);
   *map_ref = NULL;
+}
+
+void copy_entries(hash_map_t *src, hash_map_t *dst) {
+  if (!src || !dst)
+    return;
+
+  for (unsigned int i = 0; i < dst->max_size; ++i) {
+    ll_node_t *curr = dst->buckets[i]->head;
+    while (curr) {
+      entry_t *curr_entry = curr->data;
+      // printf("key: %s\n", (char *)curr_entry->key);
+      // printf("val: %s\n", (char *)curr_entry->val);
+      add_entry(src, curr_entry->key, strlen(curr_entry->key) + 1, curr_entry->val, strlen(curr_entry->val) + 1);
+      curr = curr->next;
+    }
+  }
 }
 
 void print_map(hash_map_t *map, FILE *stream) {
