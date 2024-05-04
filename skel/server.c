@@ -44,22 +44,23 @@ static response
         // puts("edit1");
         sprintf(exit_code->server_response, MSG_B, doc_name);
         sprintf(exit_code->server_log, LOG_HIT, doc_name);
-
-        // char *cached_doc_content = (char *)lru_cache_get(s->cache, doc_name);
-        // memcpy(cached_doc_content, doc_content, DOC_CONTENT_LENGTH + 1);
-        // char *persistent_doc_content = (char *)get_value(s->data_base, doc_name);
-        // memcpy(persistent_doc_content, doc_content, DOC_CONTENT_LENGTH + 1);
+        // puts("edit1.1");
 
         remove_entry(s->data_base, doc_name);
         add_entry(s->data_base, doc_name, strlen(doc_name) + 1, doc_content, strlen(doc_content) + 1);
 
-        lru_cache_remove(s->cache, doc_name);
-        void *dummy;
-        lru_cache_put(s->cache, doc_name, doc_content, &dummy);
+        // puts("edit1.2");
 
+        dll_node_t *dummy = lru_cache_get(s->cache, doc_name);
+        doc_data_t *dummy_data = dummy->data;
+        free(dummy_data->doc_content);
+        dummy_data->doc_content = strdup(doc_content);
+
+        // puts("edit1.3");
         printf(GENERIC_MSG, exit_code->server_id,
                exit_code->server_response, exit_code->server_id,
                exit_code->server_log);
+        // puts("edit1.4");
     } else {
         // puts("edit2");
         if (has_key(s->data_base, doc_name)) {
@@ -110,7 +111,9 @@ static response
     // puts("get0");
     if (has_key(s->cache->map, doc_name)) {
         // puts("get1");
-        char *doc_content = (char *)lru_cache_get(s->cache, doc_name);
+        dll_node_t *doc_node = lru_cache_get(s->cache, doc_name);
+        doc_data_t *doc_data = (doc_data_t *)doc_node->data;
+        char *doc_content = doc_data->doc_content;
         sprintf(exit_code->server_response, "%s", doc_content);
         sprintf(exit_code->server_log, LOG_HIT, doc_name);
     } else {
@@ -159,7 +162,7 @@ server *init_server(unsigned int cache_size) {
     DIE(!s, "Malloc failed");
 
     s->cache = init_lru_cache(cache_size);
-    s->data_base = create_hash_map(100, hash_string, compare_strings, free_entry);
+    s->data_base = create_hash_map(1000, hash_string, compare_strings, free_entry);
     s->requests = q_create(sizeof(request), TASK_QUEUE_SIZE, free_request_fields);
 
     return s;

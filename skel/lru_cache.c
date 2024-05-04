@@ -153,7 +153,7 @@ void *lru_cache_get(lru_cache *cache, void *key) {
 
     // puts("================== STOP ======================");
 
-    return doc_data->doc_content;
+    return dummy;
 }
 
 void lru_cache_remove(lru_cache *cache, void *key) {
