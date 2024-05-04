@@ -140,7 +140,7 @@ server *init_server(unsigned int cache_size) {
     DIE(!s, "Malloc failed");
 
     s->cache = init_lru_cache(cache_size);
-    s->data_base = create_hash_map(1000, hash_string, compare_strings, free_entry);
+    s->data_base = create_hash_map(229, hash_string, compare_strings, free_entry);
     s->requests = q_create(sizeof(request), TASK_QUEUE_SIZE, free_request_fields);
 
     return s;
@@ -226,6 +226,8 @@ void print_cache_order(lru_cache *cache) {
 #endif
 
 void free_server(server **s) {
+    if (!*s || !s)
+        return;
     server *server = *s;
     free_map(&server->data_base);
     free_lru_cache(&server->cache);
@@ -236,7 +238,7 @@ void free_server(server **s) {
         }
     }
     free(q);
-    q = NULL;
     free(server);
+    q = NULL;
     *s = NULL;
 }

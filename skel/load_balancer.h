@@ -19,6 +19,8 @@ typedef struct load_balancer {
 
     /* TODO: add fields needed for a hashring with
              multiple servers */
+    server **server_ring;
+    unsigned int number_of_servers;
 } load_balancer;
 
 
