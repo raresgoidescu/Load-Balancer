@@ -4,10 +4,12 @@
 
 #include "load_balancer.h"
 #include "server.h"
+#include "utils.h"
 #include <stdlib.h>
 
 load_balancer *init_load_balancer(bool enable_vnodes) {
     load_balancer *load_balancer = malloc(sizeof(*load_balancer));
+    DIE(!load_balancer, "Malloc failed");
     return load_balancer;
 }
 
