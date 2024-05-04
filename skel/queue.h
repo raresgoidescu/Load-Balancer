@@ -24,13 +24,14 @@ typedef struct queue_t {
     unsigned int size;
     /* Numarul maxim de elemente din coada*/
     unsigned int max_size;
+    void (*destructor)(void **);
 } queue_t;
 
 /**
  * @brief Functie care creeaza si initializeaza o coada
  * @return - (queue_t *) catre lista noii cozi
  */
-queue_t *q_create(unsigned int data_size, unsigned int max_size);
+queue_t *q_create(unsigned int data_size, unsigned int max_size, void (*destructor)(void **));
 
 /**
  * @brief Functie care adauga un element in coada

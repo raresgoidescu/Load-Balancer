@@ -15,7 +15,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-queue_t *q_create(unsigned int data_size, unsigned int max_size) {
+queue_t *q_create(unsigned int data_size, unsigned int max_size, void (*destructor)(void **)) {
     queue_t *q = malloc(sizeof(*q));
     DIE(!q, "Malloc failed");
 
@@ -24,6 +24,7 @@ queue_t *q_create(unsigned int data_size, unsigned int max_size) {
     q->data_size = data_size;
     q->size = 0;
     q->max_size = max_size;
+    q->destructor = *destructor;
 
     return q;
 }
@@ -63,8 +64,7 @@ void q_dequeue(queue_t *q) {
 	    q->rear = q->front;
     q->size--;
 
-    free(tmp->data);
-    tmp->data = NULL;
+    q->destructor(&tmp->data);
     free(tmp);
     tmp = NULL;
 }

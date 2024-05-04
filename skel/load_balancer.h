@@ -1,10 +1,5 @@
-/**
- * @file load_balancer.h
- * @author GOIDESCU Rares-Stefan (known.as.rares@gmail.com)
- * @date 2024-05-01
- * 
- * @copyright Copyright (c) 2024
- * 
+/*
+ * Copyright (c) 2024, <>
  */
 
 #ifndef LOAD_BALANCER_H

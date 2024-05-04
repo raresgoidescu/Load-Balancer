@@ -71,19 +71,21 @@ void add_entry(hash_map_t *map, void *key, unsigned int key_size, void *val,
   unsigned int index = map->hash(key) % map->max_size;
   linked_list_t *curr_bucket = map->buckets[index];
 
-  entry_t new_entry; // malloc(sizeof(entry_t));
-  // DIE(!new_entry, "Malloc failed");
+  entry_t *new_entry = malloc(sizeof(*new_entry));
+  DIE(!new_entry, "Malloc failed");
 
-  new_entry.key = calloc(1, key_size);
-  DIE(!new_entry.key, "Calloc failed");
+  new_entry->key = calloc(1, key_size);
+  DIE(!new_entry->key, "Calloc failed");
 
-  new_entry.val = calloc(1, val_size);
-  DIE(!new_entry.val, "Calloc failed");
+  new_entry->val = calloc(1, val_size);
+  DIE(!new_entry->val, "Calloc failed");
 
-  memcpy(new_entry.key, key, key_size);
-  memcpy(new_entry.val, val, val_size);
+  memcpy(new_entry->key, key, key_size);
+  memcpy(new_entry->val, val, val_size);
 
-  add_ll_nth_node(curr_bucket, curr_bucket->size, &new_entry);
+  add_ll_nth_node(curr_bucket, curr_bucket->size, new_entry);
+
+  free(new_entry);
 
   map->size++;
 }
@@ -119,6 +121,8 @@ void remove_entry(hash_map_t *map, void *key) {
     free(curr);
     curr = NULL;
   }
+
+  map->size--;
 }
 
 void free_map(hash_map_t **map_ref) {

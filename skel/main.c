@@ -8,6 +8,7 @@
 #include <string.h>
 
 #include "load_balancer.h"
+#include "lru_cache.h"
 #include "utils.h"
 #include "constants.h"
 

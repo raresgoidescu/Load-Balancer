@@ -1,17 +1,14 @@
-/**
- * @file util.c
- * @author GOIDESCU Rares-Stefan (known.as.rares@gmail.com)
- * @date 2024-05-01
- * 
- * @copyright Copyright (c) 2024
- * 
+/*
+ * Copyright (c) 2024, <>
  */
 
 #include "utils.h"
+#include <string.h>
+#include "stdbool.h"
 
-bool compare_strings(void *ptr1, void *ptr2) {
-    char *str1 = (char *)ptr1;
-    char *str2 = (char *)ptr2;
+bool compare_strings(void *p1, void *p2) {
+    char *str1 = (char *)p1;
+    char *str2 = (char *)p2;
 
     return strcmp(str1, str2);
 }

@@ -1,10 +1,5 @@
-/**
- * @file utils.h
- * @author GOIDESCU Rares-Stefan (known.as.rares@gmail.com)
- * @date 2024-05-01
- * 
- * @copyright Copyright (c) 2024
- * 
+/*
+ * Copyright (c) 2024, <>
  */
 
 #ifndef UTILS_H
@@ -14,7 +9,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdbool.h>
+#include "stdbool.h"
 
 #include "constants.h"
 
@@ -37,11 +32,7 @@
         free(response_ptr);}                                                  \
     })
 
-/**
- * @brief Functie care compara doua string-uri
- * @return - true if different, false otherwise
- */
-bool compare_strings(void *ptr1, void *ptr2);
+bool compare_strings(void *p1, void *p2);
 
 /**
  * @brief Should be used as hash function for server IDs,

@@ -1,10 +1,5 @@
-/**
- * @file lru_cache.h
- * @author GOIDESCU Rares-Stefan (known.as.rares@gmail.com)
- * @date 2024-05-01
- * 
- * @copyright Copyright (c) 2024
- * 
+/*
+ * Copyright (c) 2024, <>
  */
 
 #ifndef LRU_CACHE_H
@@ -14,17 +9,15 @@
 #include "hash_map.h"
 #include <stdbool.h>
 
+typedef struct doc_data_t {
+    char *doc_name;
+    char *doc_content;
+} doc_data_t;
+
 typedef struct lru_cache {
-    /*
-     * Lista dublu inlantuita pentru a retine documentele din cache
-     */
-    doubly_linked_list_t *cache_order;
-    /*
-     * Dictionar pentru a retine entry-urile sub forma (key, val),
-     *  unde key - doc_name & val - pointer catre documentul din cache
-     */
-    hash_map_t *data;
     unsigned int capacity;
+    hash_map_t *map;
+    doubly_linked_list_t *data;
 } lru_cache;
 
 lru_cache *init_lru_cache(unsigned int cache_capacity);
