@@ -7,9 +7,11 @@
 #include "hash_map.h"
 #include "queue.h"
 #include "server.h"
+#include "simply_linked_list.h"
 #include "utils.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 static
 void insert_keep_sorted(server **arr, int *size,
@@ -43,10 +45,58 @@ load_balancer *init_load_balancer(bool enable_vnodes) {
 
 void loader_add_server(load_balancer* main, int server_id, int cache_size) {
     server *new_server = init_server(cache_size);
-    // printf("server pointer : %p\n", new_server);
+    //printf("server pointer : %p\n", new_server);
     new_server->id = server_id;
 
     insert_keep_sorted(main->server_ring, &main->number_of_servers, new_server);
+
+    int index = -1;
+    for (int i = 0; i < main->number_of_servers; ++i) {
+        if (main->server_ring[i]->id == server_id) {
+            index = i;
+            break;
+        }
+    }
+    if (index == -1 || main->number_of_servers == 1)
+        return;
+
+    int next = (index == main->number_of_servers - 1) ? 0 : index + 1;
+
+    /**
+     * !!! IMPORTANT:
+     * !!! Cred ca trebuie sa tratez fisierele mutate ca inexistente pe cache
+     */
+    request *dummy_get = malloc(sizeof(*dummy_get));
+    dummy_get->type = GET_DOCUMENT;
+    dummy_get->doc_name = NULL;
+    dummy_get->doc_content = NULL;
+
+    if (!q_is_empty(main->server_ring[next]->requests)) {
+        response *dummy = server_handle_request(main->server_ring[next], dummy_get);
+        free(dummy->server_response);
+        free(dummy->server_log);
+        free(dummy);
+    }
+
+    free(dummy_get);
+
+    hash_map_t *next_server_db = main->server_ring[next]->data_base;
+
+    unsigned int server_hash = hash_uint(&main->server_ring[index]->id);
+
+check_for_more:
+    for (unsigned int i = 0; i < next_server_db->max_size; ++i) {
+        ll_node_t *curr = next_server_db->buckets[i]->head;
+        while (curr) {
+            entry_t *curr_entry = curr->data;
+            if (hash_string(curr_entry->key) < server_hash) {
+                add_entry(main->server_ring[index]->data_base, curr_entry->key, strlen(curr_entry->key) + 1, curr_entry->val, strlen(curr_entry->val) + 1);
+                remove_entry(next_server_db, curr_entry->key);
+                goto check_for_more;
+            }
+            curr = curr->next;
+        }
+    }
 }
 
 void loader_remove_server(load_balancer* main, int server_id) {
@@ -77,7 +127,7 @@ void loader_remove_server(load_balancer* main, int server_id) {
 
     free(dummy_get);
 
-    unsigned int successor;
+    int successor;
     if (index == main->number_of_servers - 1)
         successor = 0;
     else

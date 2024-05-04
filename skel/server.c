@@ -39,7 +39,7 @@ static response
     response *exit_code = alloc_response(MAX_RESPONSE_LENGTH, MAX_LOG_LENGTH);
     exit_code->server_id = s->id;
     
-    if (has_key(s->cache->map, doc_name)) {
+    if (has_key(s->cache->map, doc_name) && has_key(s->data_base, doc_name)) {
         sprintf(exit_code->server_response, MSG_B, doc_name);
         sprintf(exit_code->server_log, LOG_HIT, doc_name);
 
@@ -60,7 +60,6 @@ static response
 
             remove_entry(s->data_base, doc_name);
             add_entry(s->data_base, doc_name, strlen(doc_name) + 1, doc_content, strlen(doc_content) + 1);
-            
         } else {
             sprintf(exit_code->server_response, MSG_C, doc_name);
             sprintf(exit_code->server_log, LOG_MISS, doc_name);
@@ -93,7 +92,7 @@ static response
 *server_get_document(server *s, char *doc_name) {
     response *exit_code = alloc_response(MAX_RESPONSE_LENGTH, MAX_LOG_LENGTH);
 
-    if (has_key(s->cache->map, doc_name)) {
+    if (has_key(s->cache->map, doc_name) && has_key(s->data_base, doc_name)) {
         dll_node_t *doc_node = lru_cache_get(s->cache, doc_name);
         doc_data_t *doc_data = (doc_data_t *)doc_node->data;
         char *doc_content = doc_data->doc_content;
