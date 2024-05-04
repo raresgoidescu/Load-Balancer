@@ -145,9 +145,8 @@ void print_map(hash_map_t *map, FILE *stream) {
     fprintf(stream, "[Bucket %u]\n", i);
     ll_node_t *curr = map->buckets[i]->head;
     while (curr) {
-      fprintf(stream, "\tKey: %s\n\tVal: %s\n",
-              (char *)((entry_t *)curr->data)->key,
-              (char *)((entry_t *)curr->data)->val);
+      fprintf(stream, "\tKey: %s\n",
+              (char *)((entry_t *)curr->data)->key);
       curr = curr->next;
     }
     fprintf(stream, "-----\n");

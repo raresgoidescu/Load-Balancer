@@ -9,6 +9,7 @@
 #include "lru_cache.h"
 #include "doubly_linked_list.h"
 #include "hash_map.h"
+#include "simply_linked_list.h"
 #include "utils.h"
 
 lru_cache *init_lru_cache(unsigned int cache_capacity) {
@@ -54,6 +55,10 @@ bool lru_cache_put(lru_cache *cache, void *key, void *value,
     if (has_key(cache->map, key))
         return false;
 
+    // printf("Caching in:\n");
+    // puts((char *)key);
+    // puts((char *)value);
+
     void *evict = *evicted_key;
 
     doc_data_t *doc_data = malloc(sizeof(*doc_data));
@@ -61,20 +66,26 @@ bool lru_cache_put(lru_cache *cache, void *key, void *value,
     doc_data->doc_content = strdup(value);
 
     if (!lru_cache_is_full(cache)) {
+        // puts("Cache first branch");
         add_dll_nth_node(cache->data, 0, doc_data);
-        add_entry(cache->map, key, strlen(key) + 1, cache->data->head, sizeof(dll_node_t *));
+        // doc_data_t *test = cache->data->head->data;
+        // printf("Cached content: ");
+        // puts((char *)test->doc_content);
+        // printf("cache_put: %p\n", cache->data->head);
+        add_entry(cache->map, key, strlen(key) + 1, &cache->data->head, sizeof(dll_node_t *));
         evict = NULL;
     } else {
+        // puts("Cache second branch");
         dll_node_t *lru_doc = remove_dll_nth_node(cache->data, UINT_MAX);
         doc_data_t *lru_doc_data = lru_doc->data;
         evict = strdup(lru_doc_data->doc_name);
+        remove_entry(cache->map, evict);
+        add_dll_nth_node(cache->data, 0, doc_data);
+        add_entry(cache->map, key, strlen(key) + 1, &cache->data->head, sizeof(dll_node_t *));
         free(lru_doc_data->doc_content);
         free(lru_doc_data->doc_name);
         free(lru_doc_data);
         free(lru_doc);
-        remove_entry(cache->map, evict);
-        add_dll_nth_node(cache->data, 0, doc_data);
-        add_entry(cache->map, key, strlen(key) + 1, cache->data->head, sizeof(dll_node_t *));
     }
 
     *evicted_key = evict;
@@ -85,12 +96,45 @@ bool lru_cache_put(lru_cache *cache, void *key, void *value,
 }
 
 void *lru_cache_get(lru_cache *cache, void *key) {
-    dll_node_t *node = *(dll_node_t **)get_value(cache->map, key);
+    // puts("================== START =====================");
+    // printf("Getting from cache: ");
+    // puts((char *)key);
 
-    if (!node)
+    // print_map(cache->map, stdout);
+
+    unsigned int index = hash_string(key) % cache->capacity;
+    // printf("index : %u\n", index);
+
+    ll_node_t *curr = cache->map->buckets[index]->head;
+
+    while (curr) {
+        entry_t *entry = (entry_t *)curr->data;
+        // printf("loop key :\t%s\n", (char *)entry->key);
+        // printf("loop val :\t%p\n", entry->val);
+        if (!compare_strings(entry->key, key))
+            break;
+        curr = curr->next;
+    }
+
+    // printf("1st node : %p\n", cache->data->head);
+    // printf("2nd node : %p\n", cache->data->head->next);
+    // printf("3rd node : %p\n", cache->data->head->next->next);
+
+    if (!curr)
         return NULL;
 
-    doc_data_t *doc_data = (doc_data_t *)node->data;
+    entry_t *entry = (entry_t *)curr->data;
+    dll_node_t *dummy = *(dll_node_t **)entry->val;
+    doc_data_t *doc_data = (doc_data_t *)dummy->data;
+
+    // printf("Got from cache:\n");
+    // printf("Should get: ");
+    // puts((char *)entry->key);
+    // printf("Got: ");
+    // puts((char *)doc_data->doc_name);
+    // puts((char *)doc_data->doc_content);
+
+    // puts("================== STOP ======================");
 
     return doc_data->doc_content;
 }
@@ -121,7 +165,6 @@ void lru_cache_remove(lru_cache *cache, void *key) {
     }
 
     cache->data->size--;
-    /* Sterge nodul din lista circulara. Bafta! */
 
     // puts((char *)key);
     if (!key)

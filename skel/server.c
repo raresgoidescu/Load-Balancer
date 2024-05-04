@@ -7,6 +7,7 @@
 #include <string.h>
 #include "server.h"
 #include "constants.h"
+#include "doubly_linked_list.h"
 #include "hash_map.h"
 #include "lru_cache.h"
 #include "queue.h"
@@ -164,6 +165,8 @@ server *init_server(unsigned int cache_size) {
     return s;
 }
 
+void print_cache_order(lru_cache *cache);
+
 response *server_handle_request(server *s, request *req) {
     response *exit_code = alloc_response(MAX_RESPONSE_LENGTH, MAX_LOG_LENGTH);
     exit_code->server_id = s->id;
@@ -203,14 +206,32 @@ response *server_handle_request(server *s, request *req) {
                 free(edit_exit_code);
             }
 
+    printf("cache_size: %d\n", s->cache->map->size);
+    print_cache_order(s->cache);
             q_dequeue(s->requests);
         }
     }
 
     free(req_copy);
 
-    // printf("cache_size: %d\n", s->cache->map->size);
     return exit_code;
+}
+
+void print_cache_order(lru_cache *cache) {
+    if (!cache->data)
+        return;
+
+    dll_node_t *curr = cache->data->head;
+    
+    printf("\n================ Newest ================\n");
+
+    for (unsigned int i = 0; i < cache->data->size; i++) {
+        doc_data_t *doc_data = curr->data;
+        printf("| \t%-*s |\n", 30, doc_data->doc_name);
+        curr = curr->next;
+    }
+
+    printf("================ Oldest ================\n\n");
 }
 
 void free_server(server **s) {
