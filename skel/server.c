@@ -206,8 +206,8 @@ response *server_handle_request(server *s, request *req) {
                 free(edit_exit_code);
             }
 
-    printf("cache_size: %d\n", s->cache->map->size);
-    print_cache_order(s->cache);
+    // printf("cache_size: %d\n", s->cache->map->size);
+    // print_cache_order(s->cache);
             q_dequeue(s->requests);
         }
     }

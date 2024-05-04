@@ -125,6 +125,23 @@ void *lru_cache_get(lru_cache *cache, void *key) {
 
     entry_t *entry = (entry_t *)curr->data;
     dll_node_t *dummy = *(dll_node_t **)entry->val;
+
+    if (dummy == cache->data->tail) {
+        cache->data->tail = dummy->prev;
+        cache->data->head = dummy;
+    } else if (dummy != dummy->next && dummy != cache->data->head) {
+        dummy->prev->next = dummy->next;
+        dummy->next->prev = dummy->prev;
+
+        dummy->next = cache->data->head;
+        cache->data->head->prev = dummy;
+        dummy->prev = cache->data->tail;
+        cache->data->tail->next = dummy;
+
+        cache->data->head = dummy;
+    }
+    // if (dummy == cache->data->head)
+    //     puts("Hello head");
     doc_data_t *doc_data = (doc_data_t *)dummy->data;
 
     // printf("Got from cache:\n");
