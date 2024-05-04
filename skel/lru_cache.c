@@ -55,9 +55,11 @@ bool lru_cache_put(lru_cache *cache, void *key, void *value,
     if (has_key(cache->map, key))
         return false;
 
-    // printf("Caching in:\n");
-    // puts((char *)key);
-    // puts((char *)value);
+#ifdef DEBUG
+    printf("Caching in:\n");
+    puts((char *)key);
+    puts((char *)value);
+#endif
 
     void *evict = *evicted_key;
 
@@ -66,16 +68,16 @@ bool lru_cache_put(lru_cache *cache, void *key, void *value,
     doc_data->doc_content = strdup(value);
 
     if (!lru_cache_is_full(cache)) {
-        // puts("Cache first branch");
         add_dll_nth_node(cache->data, 0, doc_data);
-        // doc_data_t *test = cache->data->head->data;
-        // printf("Cached content: ");
-        // puts((char *)test->doc_content);
-        // printf("cache_put: %p\n", cache->data->head);
+    #ifdef DEBUG
+        doc_data_t *test = cache->data->head->data;
+        printf("Cached content: ");
+        puts((char *)test->doc_content);
+        printf("cache_put: %p\n", cache->data->head);
+    #endif
         add_entry(cache->map, key, strlen(key) + 1, &cache->data->head, sizeof(dll_node_t *));
         evict = NULL;
     } else {
-        // puts("Cache second branch");
         dll_node_t *lru_doc = remove_dll_nth_node(cache->data, UINT_MAX);
         doc_data_t *lru_doc_data = lru_doc->data;
         evict = strdup(lru_doc_data->doc_name);
@@ -96,29 +98,27 @@ bool lru_cache_put(lru_cache *cache, void *key, void *value,
 }
 
 void *lru_cache_get(lru_cache *cache, void *key) {
-    // puts("================== START =====================");
-    // printf("Getting from cache: ");
-    // puts((char *)key);
+#ifdef DEBUG
+    puts("================== START =====================");
+    printf("Getting from cache: ");
+    puts((char *)key);
 
-    // print_map(cache->map, stdout);
-
+    print_map(cache->map, stdout);
+#endif
     unsigned int index = hash_string(key) % cache->capacity;
-    // printf("index : %u\n", index);
 
     ll_node_t *curr = cache->map->buckets[index]->head;
 
     while (curr) {
         entry_t *entry = (entry_t *)curr->data;
-        // printf("loop key :\t%s\n", (char *)entry->key);
-        // printf("loop val :\t%p\n", entry->val);
+    #ifdef DEBUG
+        printf("loop key :\t%s\n", (char *)entry->key);
+        printf("loop val :\t%p\n", entry->val);
+    #endif
         if (!compare_strings(entry->key, key))
             break;
         curr = curr->next;
     }
-
-    // printf("1st node : %p\n", cache->data->head);
-    // printf("2nd node : %p\n", cache->data->head->next);
-    // printf("3rd node : %p\n", cache->data->head->next->next);
 
     if (!curr)
         return NULL;
@@ -140,18 +140,18 @@ void *lru_cache_get(lru_cache *cache, void *key) {
 
         cache->data->head = dummy;
     }
-    // if (dummy == cache->data->head)
-    //     puts("Hello head");
+
+#ifdef DEBUG
     doc_data_t *doc_data = (doc_data_t *)dummy->data;
+    printf("Got from cache:\n");
+    printf("Should get: ");
+    puts((char *)entry->key);
+    printf("Got: ");
+    puts((char *)doc_data->doc_name);
+    puts((char *)doc_data->doc_content);
 
-    // printf("Got from cache:\n");
-    // printf("Should get: ");
-    // puts((char *)entry->key);
-    // printf("Got: ");
-    // puts((char *)doc_data->doc_name);
-    // puts((char *)doc_data->doc_content);
-
-    // puts("================== STOP ======================");
+    puts("================== STOP ======================");
+#endif
 
     return dummy;
 }
@@ -159,13 +159,10 @@ void *lru_cache_get(lru_cache *cache, void *key) {
 void lru_cache_remove(lru_cache *cache, void *key) {
     dll_node_t *node = *(dll_node_t **)get_value(cache->map, key);
     if (!node) {
-        puts("E NULL");
         return;
     }
 
     doc_data_t *doc_data = (doc_data_t *)node->data;
-    // puts(doc_data->doc_name);
-    // puts(doc_data->doc_content);
     free(doc_data->doc_content);
     free(doc_data->doc_name);
     free(doc_data);
@@ -182,10 +179,6 @@ void lru_cache_remove(lru_cache *cache, void *key) {
     }
 
     cache->data->size--;
-
-    // puts((char *)key);
-    if (!key)
-        puts("Mars acasa");
 
     remove_entry(cache->map, key);
 }

@@ -39,42 +39,29 @@ static response
     response *exit_code = alloc_response(MAX_RESPONSE_LENGTH, MAX_LOG_LENGTH);
     exit_code->server_id = s->id;
     
-    // puts("edit0");
     if (has_key(s->cache->map, doc_name)) {
-        // puts("edit1");
         sprintf(exit_code->server_response, MSG_B, doc_name);
         sprintf(exit_code->server_log, LOG_HIT, doc_name);
-        // puts("edit1.1");
 
         remove_entry(s->data_base, doc_name);
         add_entry(s->data_base, doc_name, strlen(doc_name) + 1, doc_content, strlen(doc_content) + 1);
-
-        // puts("edit1.2");
 
         dll_node_t *dummy = lru_cache_get(s->cache, doc_name);
         doc_data_t *dummy_data = dummy->data;
         free(dummy_data->doc_content);
         dummy_data->doc_content = strdup(doc_content);
 
-        // puts("edit1.3");
         printf(GENERIC_MSG, exit_code->server_id,
                exit_code->server_response, exit_code->server_id,
                exit_code->server_log);
-        // puts("edit1.4");
     } else {
-        // puts("edit2");
         if (has_key(s->data_base, doc_name)) {
-            // puts("edit2.1");
             sprintf(exit_code->server_response, MSG_B, doc_name);
 
             remove_entry(s->data_base, doc_name);
             add_entry(s->data_base, doc_name, strlen(doc_name) + 1, doc_content, strlen(doc_content) + 1);
             
-            printf(GENERIC_MSG, exit_code->server_id,
-                   exit_code->server_response, exit_code->server_id,
-                   exit_code->server_log);
         } else {
-            // puts("edit2.2");
             sprintf(exit_code->server_response, MSG_C, doc_name);
             sprintf(exit_code->server_log, LOG_MISS, doc_name);
 
@@ -82,7 +69,6 @@ static response
         }
 
         if (lru_cache_is_full(s->cache)) {
-            // puts("edit3");
             void *oldest_doc_name;
             lru_cache_put(s->cache, doc_name, doc_content, &oldest_doc_name);
             sprintf(exit_code->server_log, LOG_EVICT, doc_name, (char *)oldest_doc_name);
@@ -91,7 +77,6 @@ static response
                    exit_code->server_log);
             free(oldest_doc_name);
         } else {
-            // puts("edit4");
             void *dummy;
             lru_cache_put(s->cache, doc_name, doc_content, &dummy);
             sprintf(exit_code->server_log, LOG_MISS, doc_name);
@@ -108,35 +93,28 @@ static response
 *server_get_document(server *s, char *doc_name) {
     response *exit_code = alloc_response(MAX_RESPONSE_LENGTH, MAX_LOG_LENGTH);
 
-    // puts("get0");
     if (has_key(s->cache->map, doc_name)) {
-        // puts("get1");
         dll_node_t *doc_node = lru_cache_get(s->cache, doc_name);
         doc_data_t *doc_data = (doc_data_t *)doc_node->data;
         char *doc_content = doc_data->doc_content;
         sprintf(exit_code->server_response, "%s", doc_content);
         sprintf(exit_code->server_log, LOG_HIT, doc_name);
     } else {
-        // puts("get2");
         if (has_key(s->data_base, doc_name)) {
-            // puts("get3");
             char *doc_content = (char *)get_value(s->data_base, doc_name);
             sprintf(exit_code->server_response, "%s", doc_content);
 
             if (lru_cache_is_full(s->cache)) {
-                // puts("get3.1");
                 void *oldest_doc_name;
                 lru_cache_put(s->cache, doc_name, doc_content, &oldest_doc_name);
                 sprintf(exit_code->server_log, LOG_EVICT, doc_name, (char*)oldest_doc_name);
                 free(oldest_doc_name);
             } else {
-                // puts("get3.2");
                 void *dummy;
                 lru_cache_put(s->cache, doc_name, doc_content, &dummy);
                 sprintf(exit_code->server_log, LOG_MISS, doc_name);
             }
         } else {
-            // puts("get4");
             sprintf(exit_code->server_response, "%s", "(null)");
             sprintf(exit_code->server_log, LOG_FAULT, doc_name);
         }
@@ -168,7 +146,11 @@ server *init_server(unsigned int cache_size) {
     return s;
 }
 
+#ifdef DEBUG
+
 void print_cache_order(lru_cache *cache);
+
+#endif
 
 response *server_handle_request(server *s, request *req) {
     response *exit_code = alloc_response(MAX_RESPONSE_LENGTH, MAX_LOG_LENGTH);
@@ -209,8 +191,10 @@ response *server_handle_request(server *s, request *req) {
                 free(edit_exit_code);
             }
 
-    // printf("cache_size: %d\n", s->cache->map->size);
-    // print_cache_order(s->cache);
+        #ifdef DEBUG
+            // printf("cache_size: %d\n", s->cache->map->size);
+            // print_cache_order(s->cache);
+        #endif
             q_dequeue(s->requests);
         }
     }
@@ -219,6 +203,8 @@ response *server_handle_request(server *s, request *req) {
 
     return exit_code;
 }
+
+#ifdef DEBUG
 
 void print_cache_order(lru_cache *cache) {
     if (!cache->data)
@@ -236,6 +222,8 @@ void print_cache_order(lru_cache *cache) {
 
     printf("================ Oldest ================\n\n");
 }
+
+#endif
 
 void free_server(server **s) {
     server *server = *s;
