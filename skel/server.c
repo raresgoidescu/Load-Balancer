@@ -162,7 +162,10 @@ response *server_handle_request(server *s, request *req) {
         req_copy->doc_content = strdup(req->doc_content);
     else
         req_copy->doc_content = NULL;
-    req_copy->doc_name = strdup(req->doc_name);
+    if (req->doc_name)
+        req_copy->doc_name = strdup(req->doc_name);
+    else
+        goto free_kevin;
 
     q_enqueue(s->requests, req_copy);
 
@@ -171,6 +174,7 @@ response *server_handle_request(server *s, request *req) {
     sprintf(exit_code->server_log, LOG_LAZY_EXEC, s->requests->size);
 
     if (req->type == GET_DOCUMENT) {
+free_kevin:
         while (!q_is_empty(s->requests)) {
             ll_node_t *front = s->requests->front;
             request *see = front->data;
@@ -192,8 +196,8 @@ response *server_handle_request(server *s, request *req) {
             }
 
         #ifdef DEBUG
-            // printf("cache_size: %d\n", s->cache->map->size);
-            // print_cache_order(s->cache);
+            printf("cache_size: %d\n", s->cache->map->size);
+            print_cache_order(s->cache);
         #endif
             q_dequeue(s->requests);
         }

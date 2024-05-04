@@ -3,6 +3,8 @@
  */
 
 #include "load_balancer.h"
+#include "constants.h"
+#include "queue.h"
 #include "server.h"
 #include "utils.h"
 #include <stdio.h>
@@ -21,9 +23,7 @@ void insert_keep_sorted(server **arr, unsigned int *size,
 }
 
 load_balancer *init_load_balancer(bool enable_vnodes) {
-    // load_balancer *load_balancer = malloc(sizeof(*load_balancer));
-    // DIE(!load_balancer, "Malloc failed");
-
+    enable_vnodes = 0;
     load_balancer *load_balancer = malloc(sizeof(*load_balancer));
     DIE(!load_balancer, "Malloc failed");
 
@@ -41,10 +41,6 @@ load_balancer *init_load_balancer(bool enable_vnodes) {
 }
 
 void loader_add_server(load_balancer* main, int server_id, int cache_size) {
-    // /* TODO: Remove test_server after checking the server implementation */
-    // main->test_server = init_server(cache_size);
-    // main->test_server->id = server_id;
-
     server *new_server = init_server(cache_size);
     // printf("server pointer : %p\n", new_server);
     new_server->id = server_id;
@@ -53,15 +49,46 @@ void loader_add_server(load_balancer* main, int server_id, int cache_size) {
 }
 
 void loader_remove_server(load_balancer* main, int server_id) {
-    /* TODO */
+    if (main->number_of_servers == 0)
+        return;
+
+    int index = -1;
+    for (int i = 0; i < main->number_of_servers; ++i)
+        if (main->server_ring[i]->id == server_id) {
+            index = i;
+            break;
+        }
+
+    if (index == -1)
+        return;
+
+    request *dummy_get = malloc(sizeof(*dummy_get));
+    dummy_get->type = GET_DOCUMENT;
+    dummy_get->doc_name = NULL;
+    dummy_get->doc_content = NULL;
+
+    if (!q_is_empty(main->server_ring[index]->requests)) {
+        response *dummy = server_handle_request(main->server_ring[index], dummy_get);
+        free(dummy->server_response);
+        free(dummy->server_log);
+        free(dummy);
+    }
+
+    free(dummy_get);
+
+    unsigned int successor;
+    if (index == main->number_of_servers - 1)
+        successor = 0;
+    else
+        successor = index + 1;
+
+    
 }
 
 response *loader_forward_request(load_balancer* main, request *req) {
-    // return server_handle_request(main->test_server, req);
     unsigned int doc_hash = hash_string(req->doc_name);
 
     // printf("doc hash : %u\n", doc_hash);
-
     for (unsigned int i = 0; i < main->number_of_servers; ++i) {
         // printf("server[%d] hash : %u\n", i, hash_uint(&main->server_ring[i]->id));
         if (doc_hash < hash_uint(&main->server_ring[i]->id))
@@ -72,12 +99,6 @@ response *loader_forward_request(load_balancer* main, request *req) {
 }
 
 void free_load_balancer(load_balancer** main) {
-    // load_balancer *m = *main;
-    // /* TODO: get rid of test_server after testing the server implementation */
-    // free_server(&m->test_server);
-    // free(m);
-
-    // *main = NULL;
     load_balancer *m = *main;
     for (int i = 0; i < MAX_SERVERS; ++i) {
         // printf("pointer[%d]: %p\n", i, m->server_ring[i]);
