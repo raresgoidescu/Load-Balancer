@@ -90,11 +90,22 @@ void loader_add_server(load_balancer* main, int server_id, int cache_size) {
 
     send_empty_request(main->server_ring[next]);
 
+    // Daca adaug pe ultimul index, atunci trebuie sa ma uit pe primul index
     for (unsigned int i = 0; i < next_server_db->max_size; ++i) {
         ll_node_t *curr = next_server_db->buckets[i]->head;
         while (curr) {
             entry_t *curr_entry = curr->data;
             ll_node_t *spare_pointer = curr->next;
+
+
+            // GANDESTE LOGICA AICI
+            if (next == 0 && hash_string(curr_entry->key) > hash_uint(&main->server_ring[next]->id) && hash_string(curr_entry->key) <= server_hash) {
+                add_entry(main->server_ring[index]->data_base, curr_entry->key, strlen(curr_entry->key) + 1, curr_entry->val, strlen(curr_entry->val) + 1);
+                lru_cache_remove(main->server_ring[next]->cache, curr_entry->key);
+                remove_entry(next_server_db, curr_entry->key);
+                curr = spare_pointer;
+                continue;
+            }
             if (hash_string(curr_entry->key) > last_server_hash && index == 0) {
                 add_entry(main->server_ring[index]->data_base, curr_entry->key, strlen(curr_entry->key) + 1, curr_entry->val, strlen(curr_entry->val) + 1);
                 lru_cache_remove(main->server_ring[next]->cache, curr_entry->key);                
@@ -102,12 +113,10 @@ void loader_add_server(load_balancer* main, int server_id, int cache_size) {
                 curr = spare_pointer;
                 continue;
             }
-            if (hash_string(curr_entry->key) <= hash_uint(&main->server_ring[next]->id)) {
-                if (hash_string(curr_entry->key) <= server_hash) {
-                    add_entry(main->server_ring[index]->data_base, curr_entry->key, strlen(curr_entry->key) + 1, curr_entry->val, strlen(curr_entry->val) + 1);
-                    lru_cache_remove(main->server_ring[next]->cache, curr_entry->key);                
-                    remove_entry(next_server_db, curr_entry->key);
-                }
+            if (index && next && hash_string(curr_entry->key) <= server_hash && hash_string(curr_entry->key) > hash_uint(&main->server_ring[next]->id)) {
+                add_entry(main->server_ring[index]->data_base, curr_entry->key, strlen(curr_entry->key) + 1, curr_entry->val, strlen(curr_entry->val) + 1);
+                lru_cache_remove(main->server_ring[next]->cache, curr_entry->key);                
+                remove_entry(next_server_db, curr_entry->key);
             }
             curr = spare_pointer;
         }
@@ -131,7 +140,17 @@ void loader_remove_server(load_balancer* main, int server_id) {
     int successor = (index == main->number_of_servers - 1) ? 0 : index + 1;
 
     send_empty_request(main->server_ring[index]);
-    send_empty_request(main->server_ring[successor]);
+
+    // bool gotta_update_the_queue = false;
+    // for (unsigned int i = 0; i < main->server_ring[index]->data_base->max_size; ++i) {
+    //     ll_node_t *curr = main->server_ring[index]->data_base->buckets[i]->head;
+    //     while (curr) {
+    //         doc_data_t *doc_data = curr->data;
+    //         if (has_key(main->server_ring[successor]->data_base, doc_data->doc_name))
+    //             send_empty_request(main->server_ring[successor]);
+    //         curr = curr->next;
+    //     }
+    // }
 
     copy_entries(main->server_ring[index]->data_base, main->server_ring[successor]->data_base);
 
@@ -160,9 +179,9 @@ void free_load_balancer(load_balancer** main) {
     load_balancer *m = *main;
     for (int i = 0; i < MAX_SERVERS; ++i) {
         // if (m->server_ring[i]) {
-        //     printf("[%d] %d\n", i, m->server_ring[i]->id);
-        //     if (has_key(m->server_ring[i]->data_base, "most_air_simple.txt"))
-        //         printf("haha\n");
+        //     printf("[%.3d] %d\n", i, m->server_ring[i]->id);
+        //     if (has_key(m->server_ring[i]->data_base, "financial_rich.txt"))
+        //         printf("\tfinancial_rich.txt\n");
         // }
         free_server(&m->server_ring[i]);
     }
