@@ -175,6 +175,10 @@ void lru_cache_remove(lru_cache *cache, void *key) {
         cache->data->head = cache->data->tail = NULL;
         node = NULL;
     } else {
+        if (node == cache->data->head)
+            cache->data->head = node->next;
+        if (node == cache->data->tail)
+            cache->data->tail = node->prev;
         node->prev->next = node->next;
         node->next->prev = node->prev;
         free(node);
