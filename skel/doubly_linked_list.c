@@ -27,7 +27,7 @@ void add_dll_nth_node(doubly_linked_list_t *list,
     dll_node_t *new_node = malloc(sizeof(*new_node));
     DIE(!new_node, "Malloc failed");
 
-    new_node->data = malloc(list->data_size);
+    new_node->data = calloc(1, list->data_size);
     DIE(!new_node->data, "Malloc failed");
 
     memcpy(new_node->data, new_data, list->data_size);

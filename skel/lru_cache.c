@@ -37,9 +37,11 @@ void free_lru_cache(lru_cache **cache) {
         for (unsigned int i = 0; i < list->size; ++i) {
             list->head = curr->next;
             doc_data_t *doc_data = curr->data;
-            free(doc_data->doc_name);
-            free(doc_data->doc_content);
-            free(doc_data);
+            if (doc_data) {
+                free(doc_data->doc_name);
+                free(doc_data->doc_content);
+                free(doc_data);
+            }
             free(curr);
             curr = list->head;
         }
@@ -157,10 +159,11 @@ void *lru_cache_get(lru_cache *cache, void *key) {
 }
 
 void lru_cache_remove(lru_cache *cache, void *key) {
-    dll_node_t *node = *(dll_node_t **)get_value(cache->map, key);
-    if (!node) {
+    dll_node_t *node;
+    if (has_key(cache->map, key))
+        node = *(dll_node_t **)get_value(cache->map, key);
+    else
         return;
-    }
 
     doc_data_t *doc_data = (doc_data_t *)node->data;
     free(doc_data->doc_content);

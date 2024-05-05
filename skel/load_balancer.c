@@ -4,7 +4,9 @@
 
 #include "load_balancer.h"
 #include "constants.h"
+#include "doubly_linked_list.h"
 #include "hash_map.h"
+#include "lru_cache.h"
 #include "queue.h"
 #include "server.h"
 #include "simply_linked_list.h"
@@ -50,6 +52,7 @@ void loader_add_server(load_balancer* main, int server_id, int cache_size) {
 
     insert_keep_sorted(main->server_ring, &main->number_of_servers, new_server);
 
+
     int index = -1;
     for (int i = 0; i < main->number_of_servers; ++i) {
         if (main->server_ring[i]->id == server_id) {
@@ -62,10 +65,10 @@ void loader_add_server(load_balancer* main, int server_id, int cache_size) {
 
     int next = (index == main->number_of_servers - 1) ? 0 : index + 1;
 
-    /**
-     * !!! IMPORTANT:
-     * !!! Cred ca trebuie sa tratez fisierele mutate ca inexistente pe cache
-     */
+    unsigned int server_hash = hash_uint(&main->server_ring[index]->id);
+
+    hash_map_t *next_server_db = main->server_ring[next]->data_base;
+
     request *dummy_get = malloc(sizeof(*dummy_get));
     dummy_get->type = GET_DOCUMENT;
     dummy_get->doc_name = NULL;
@@ -80,21 +83,31 @@ void loader_add_server(load_balancer* main, int server_id, int cache_size) {
 
     free(dummy_get);
 
-    hash_map_t *next_server_db = main->server_ring[next]->data_base;
+    bool can_share = false;
+    for (unsigned int i = 0; i < next_server_db->max_size && !can_share; ++i) {
+        ll_node_t *curr = next_server_db->buckets[i]->head;
+        while (curr && !can_share) {
+            entry_t *curr_entry = curr->data;
+            if (hash_string(curr_entry->key) < server_hash)
+                can_share = true;
+            curr = curr->next;
+        }
+    }
 
-    unsigned int server_hash = hash_uint(&main->server_ring[index]->id);
+    if (!can_share)
+        return;
 
-check_for_more:
     for (unsigned int i = 0; i < next_server_db->max_size; ++i) {
         ll_node_t *curr = next_server_db->buckets[i]->head;
         while (curr) {
             entry_t *curr_entry = curr->data;
+            ll_node_t *spare_pointer = curr->next;
             if (hash_string(curr_entry->key) < server_hash) {
                 add_entry(main->server_ring[index]->data_base, curr_entry->key, strlen(curr_entry->key) + 1, curr_entry->val, strlen(curr_entry->val) + 1);
+                lru_cache_remove(main->server_ring[index]->cache, curr_entry->key);
                 remove_entry(next_server_db, curr_entry->key);
-                goto check_for_more;
             }
-            curr = curr->next;
+            curr = spare_pointer;
         }
     }
 }
