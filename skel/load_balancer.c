@@ -97,8 +97,6 @@ void loader_add_server(load_balancer* main, int server_id, int cache_size) {
             entry_t *curr_entry = curr->data;
             ll_node_t *spare_pointer = curr->next;
 
-
-            // GANDESTE LOGICA AICI
             if (next == 0 && hash_string(curr_entry->key) > hash_uint(&main->server_ring[next]->id) && hash_string(curr_entry->key) <= server_hash) {
                 add_entry(main->server_ring[index]->data_base, curr_entry->key, strlen(curr_entry->key) + 1, curr_entry->val, strlen(curr_entry->val) + 1);
                 lru_cache_remove(main->server_ring[next]->cache, curr_entry->key);
@@ -106,14 +104,14 @@ void loader_add_server(load_balancer* main, int server_id, int cache_size) {
                 curr = spare_pointer;
                 continue;
             }
-            if (hash_string(curr_entry->key) > last_server_hash && index == 0) {
+            else if (hash_string(curr_entry->key) > last_server_hash && index == 0) {
                 add_entry(main->server_ring[index]->data_base, curr_entry->key, strlen(curr_entry->key) + 1, curr_entry->val, strlen(curr_entry->val) + 1);
                 lru_cache_remove(main->server_ring[next]->cache, curr_entry->key);                
                 remove_entry(next_server_db, curr_entry->key);
                 curr = spare_pointer;
                 continue;
             }
-            if (index && next && hash_string(curr_entry->key) <= server_hash && hash_string(curr_entry->key) > hash_uint(&main->server_ring[next]->id)) {
+            else if (next && hash_string(curr_entry->key) <= server_hash) {
                 add_entry(main->server_ring[index]->data_base, curr_entry->key, strlen(curr_entry->key) + 1, curr_entry->val, strlen(curr_entry->val) + 1);
                 lru_cache_remove(main->server_ring[next]->cache, curr_entry->key);                
                 remove_entry(next_server_db, curr_entry->key);
