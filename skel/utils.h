@@ -1,5 +1,10 @@
-/*
- * Copyright (c) 2024, <>
+/**
+ * @file utils.h
+ * @author GOIDESCU Rares-Stefan (known.as.rares@gmail.com)
+ * @date 2024-05-06
+ * 
+ * @copyright Copyright (c) 2024
+ * 
  */
 
 #ifndef UTILS_H
@@ -32,6 +37,14 @@
         free(response_ptr);}                                                  \
     })
 
+/**
+ * @brief Functie care determina daca doua string-uri sunt egale sau nu
+ * 
+ * @param p1 - primul string
+ * @param p2 - al doilea string
+ * @return true - string-urile sunt diferite
+ * @return false - string-urile sunt egale
+ */
 bool compare_strings(void *p1, void *p2);
 
 /**

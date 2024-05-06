@@ -1,5 +1,10 @@
-/*
- * Copyright (c) 2024, <>
+/**
+ * @file load_balancer.h
+ * @author GOIDESCU Rares-Stefan (known.as.rares@gmail.com)
+ * @date 2024-05-06
+ * 
+ * @copyright Copyright (c) 2024
+ * 
  */
 
 #ifndef LOAD_BALANCER_H
@@ -12,7 +17,13 @@
 typedef struct load_balancer {
     unsigned int (*hash_function_servers)(void *);
     unsigned int (*hash_function_docs)(void *);
+    /*
+     * Vector care stocheaza pointeri catre fiecare server din ring.
+     * Acesta este tratat ca un vector circular in implementare,
+     * dupa ideea server_ring[last].next = server_ring[first]
+     */
     server **server_ring;
+    /* Numarul curent de servere din ring */
     int number_of_servers;
 } load_balancer;
 

@@ -1,5 +1,11 @@
-/*
- * Copyright (c) 2024, <>
+/**
+ * @file constants.h
+ * @author GOIDESCU Rares-Stefan (known.as.rares@gmail.com)
+ *  Desi nu am schimbat nimic :D
+ * @date 2024-05-06
+ * 
+ * @copyright Copyright (c) 2024
+ * 
  */
 
 #ifndef CONSTANTS_H

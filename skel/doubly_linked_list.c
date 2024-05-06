@@ -1,6 +1,8 @@
 /**
  * @file doubly_linked_list.c
  * @author GOIDESCU Rares-Stefan (known.as.rares@gmail.com)
+ * @brief implementarea unei liste dublu inlantuite circulare
+ *  folosind head si tail pentru operatii in O(1) la extremitati
  * @date 2024-05-01
  * 
  * @copyright Copyright (c) 2024

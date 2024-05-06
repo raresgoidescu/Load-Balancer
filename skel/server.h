@@ -1,5 +1,10 @@
-/*
- * Copyright (c) 2024, <>
+/**
+ * @file server.h
+ * @author GOIDESCU Rares-Stefan (known.as.rares@gmail.com)
+ * @date 2024-05-06
+ * 
+ * @copyright Copyright (c) 2024
+ * 
  */
 
 #ifndef SERVER_H
@@ -16,9 +21,13 @@
 #define MAX_RESPONSE_LENGTH     4096
 
 typedef struct server {
+    /* ID-ul unic al unui server */
     int id;
+    /* Cache-ul serverului */
     lru_cache *cache;
+    /* Baza de date a serverului */
     hash_map_t *data_base;
+    /* Coada de cereri a serverului */
     queue_t *requests;
 } server;
 
@@ -33,7 +42,6 @@ typedef struct response {
     char *server_response;
     int server_id;
 } response;
-
 
 server *init_server(unsigned int cache_size);
 

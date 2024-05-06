@@ -24,6 +24,7 @@ typedef struct queue_t {
     unsigned int size;
     /* Numarul maxim de elemente din coada*/
     unsigned int max_size;
+    /* Functie care elibereaza memoria folosita de un nod */
     void (*destructor)(void **);
 } queue_t;
 

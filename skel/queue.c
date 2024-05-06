@@ -1,6 +1,7 @@
 /**
  * @file queue.c
  * @author GOIDESCU Rares-Stefan (known.as.rares@gmail.com)
+ * @brief implementare folosind o lista simplu inlantuita
  * @date 2024-05-01
  * 
  * @copyright Copyright (c) 2024

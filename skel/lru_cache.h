@@ -1,5 +1,10 @@
-/*
- * Copyright (c) 2024, <>
+/**
+ * @file lru_cache.h
+ * @author GOIDESCU Rares-Stefan (known.as.rares@gmail.com)
+ * @date 2024-05-06
+ * 
+ * @copyright Copyright (c) 2024
+ * 
  */
 
 #ifndef LRU_CACHE_H
@@ -15,8 +20,18 @@ typedef struct doc_data_t {
 } doc_data_t;
 
 typedef struct lru_cache {
+    /* Capacitatea maxima a cache-ului */
     unsigned int capacity;
+    /*
+     * Dictionarul care imi permite accesul in O(1) catre orice 
+     * document din cache (lista dublu inlantuita).
+     * (key, val) = (doc_name, (dll_node_t *)doc_data)
+     */
     hash_map_t *map;
+    /*
+     * Lista dublu inlantuita in care pastrez documentele sub forma
+     * de pereche (doc_name, doc_content)
+     */
     doubly_linked_list_t *data;
 } lru_cache;
 

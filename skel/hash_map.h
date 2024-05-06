@@ -80,8 +80,6 @@ void remove_entry(hash_map_t *map, void *key);
  */
 void free_map(hash_map_t **map_ref);
 
-void copy_entries(hash_map_t *src, hash_map_t *dst);
-
 /**
  * @brief Functie care afiseaza continutul unui dictionar cu (str, str)
  */

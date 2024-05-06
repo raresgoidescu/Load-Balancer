@@ -1,5 +1,10 @@
-/*
- * Copyright (c) 2024, <>
+/**
+ * @file lru_cache.c
+ * @author GOIDESCU Rares-Stefan (known.as.rares@gmail.com)
+ * @date 2024-05-06
+ * 
+ * @copyright Copyright (c) 2024
+ * 
  */
 
 #include <limits.h>
@@ -68,11 +73,18 @@ bool lru_cache_put(lru_cache *cache, void *key, void *value,
 
     void *evict = *evicted_key;
 
+    long unsigned int key_len = strlen(key) + 1;
+
     doc_data_t *doc_data = malloc(sizeof(*doc_data));
+    DIE(!doc_data, "Malloc failed");
     doc_data->doc_name = strdup(key);
     doc_data->doc_content = strdup(value);
 
     if (!lru_cache_is_full(cache)) {
+        /* 
+         * Daca cache-ul nu este plin, pur si simplu adaugam si
+         * punem evict pe NULL, intrucat nu scoatem nimic
+         */
         add_dll_nth_node(cache->data, 0, doc_data);
     #ifdef DEBUG
         doc_data_t *test = cache->data->head->data;
@@ -80,15 +92,21 @@ bool lru_cache_put(lru_cache *cache, void *key, void *value,
         puts((char *)test->doc_content);
         printf("cache_put: %p\n", cache->data->head);
     #endif
-        add_entry(cache->map, key, strlen(key) + 1, &cache->data->head, sizeof(dll_node_t *));
+        dll_node_t *added_doc = cache->data->head;
+        add_entry(cache->map, key, key_len, &added_doc, sizeof(dll_node_t *));
         evict = NULL;
     } else {
+        /*
+         * Daca cache-ul este plin, eliminam ultimul nod din lista,
+         * cel mai vechi nod, in O(1), si adaugam noul document
+         */
         dll_node_t *lru_doc = remove_dll_nth_node(cache->data, UINT_MAX);
         doc_data_t *lru_doc_data = lru_doc->data;
         evict = strdup(lru_doc_data->doc_name);
         remove_entry(cache->map, evict);
         add_dll_nth_node(cache->data, 0, doc_data);
-        add_entry(cache->map, key, strlen(key) + 1, &cache->data->head, sizeof(dll_node_t *));
+        dll_node_t *added_doc = cache->data->head;
+        add_entry(cache->map, key, key_len, &added_doc, sizeof(dll_node_t *));
         free(lru_doc_data->doc_content);
         free(lru_doc_data->doc_name);
         free(lru_doc_data);
@@ -129,21 +147,26 @@ void *lru_cache_get(lru_cache *cache, void *key) {
         return NULL;
 
     entry_t *entry = (entry_t *)curr->data;
-    dll_node_t *dummy = *(dll_node_t **)entry->val;
+    dll_node_t *doc = *(dll_node_t **)entry->val;
 
-    if (dummy == cache->data->tail) {
-        cache->data->tail = dummy->prev;
-        cache->data->head = dummy;
-    } else if (dummy != dummy->next && dummy != cache->data->head) {
-        dummy->prev->next = dummy->next;
-        dummy->next->prev = dummy->prev;
+    /*
+     * Dupa ce am gasit documentul, il scoatem de unde era in cache
+     * si il adaugam la inceputul listei
+     * (locul celui mai recent accesat document)
+     */
+    if (doc == cache->data->tail) {
+        cache->data->tail = doc->prev;
+        cache->data->head = doc;
+    } else if (doc != doc->next && doc != cache->data->head) {
+        doc->prev->next = doc->next;
+        doc->next->prev = doc->prev;
 
-        dummy->next = cache->data->head;
-        cache->data->head->prev = dummy;
-        dummy->prev = cache->data->tail;
-        cache->data->tail->next = dummy;
+        doc->next = cache->data->head;
+        cache->data->head->prev = doc;
+        doc->prev = cache->data->tail;
+        cache->data->tail->next = doc;
 
-        cache->data->head = dummy;
+        cache->data->head = doc;
     }
 
 #ifdef DEBUG
@@ -158,11 +181,12 @@ void *lru_cache_get(lru_cache *cache, void *key) {
     puts("================== STOP ======================");
 #endif
 
-    return dummy;
+    return doc;
 }
 
 void lru_cache_remove(lru_cache *cache, void *key) {
     dll_node_t *node;
+    /* Gasim documentul in lista */
     if (has_key(cache->map, key))
         node = *(dll_node_t **)get_value(cache->map, key);
     else
@@ -173,6 +197,7 @@ void lru_cache_remove(lru_cache *cache, void *key) {
     free(doc_data->doc_name);
     free(doc_data);
 
+    /* Scoatem nodul din lista */
     if (node == node->next) {
         free(node);
         cache->data->head = cache->data->tail = NULL;
@@ -190,5 +215,6 @@ void lru_cache_remove(lru_cache *cache, void *key) {
 
     cache->data->size--;
 
+    /* Scoatem documentul din dictionar */
     remove_entry(cache->map, key);
 }
