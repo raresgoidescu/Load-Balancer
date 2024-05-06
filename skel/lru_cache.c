@@ -17,7 +17,10 @@ lru_cache *init_lru_cache(unsigned int cache_capacity) {
     DIE(!cache, "Malloc failed");
 
     cache->capacity = cache_capacity;
-    cache->map = create_hash_map(cache_capacity, hash_string, compare_strings, free_entry);
+    cache->map = create_hash_map(cache_capacity,
+                                 hash_string,
+                                 compare_strings,
+                                 free_entry);
     cache->data = create_dll(sizeof(doc_data_t));
 
     return cache;

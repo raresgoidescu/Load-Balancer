@@ -151,9 +151,9 @@ void copy_entries(hash_map_t *src, hash_map_t *dst) {
     while (curr) {
       entry_t *curr_entry = curr->data;
       ll_node_t *spare_pointer = curr->next;
-      // printf("key: %s\n", (char *)curr_entry->key);
-      // printf("val: %s\n", (char *)curr_entry->val);
-      add_entry(dst, curr_entry->key, strlen(curr_entry->key) + 1, curr_entry->val, strlen(curr_entry->val) + 1);
+      unsigned long int key_len = strlen(curr_entry->key) + 1;
+      unsigned long int val_len = strlen(curr_entry->val) + 1;
+      add_entry(dst, curr_entry->key, key_len, curr_entry->val, val_len);
       remove_entry(src, curr_entry->key);
       curr = spare_pointer;
     }

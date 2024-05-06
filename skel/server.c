@@ -38,13 +38,16 @@ static response
 *server_edit_document(server *s, char *doc_name, char *doc_content) {
     response *exit_code = alloc_response(MAX_RESPONSE_LENGTH, MAX_LOG_LENGTH);
     exit_code->server_id = s->id;
-    
+
+    long unsigned int name_len = strlen(doc_name) + 1;
+    long unsigned int content_len = strlen(doc_content) + 1;
+
     if (has_key(s->cache->map, doc_name) && has_key(s->data_base, doc_name)) {
         sprintf(exit_code->server_response, MSG_B, doc_name);
         sprintf(exit_code->server_log, LOG_HIT, doc_name);
 
         remove_entry(s->data_base, doc_name);
-        add_entry(s->data_base, doc_name, strlen(doc_name) + 1, doc_content, strlen(doc_content) + 1);
+        add_entry(s->data_base, doc_name, name_len, doc_content, content_len);
 
         dll_node_t *dummy = lru_cache_get(s->cache, doc_name);
         doc_data_t *dummy_data = dummy->data;
@@ -59,12 +62,12 @@ static response
             sprintf(exit_code->server_response, MSG_B, doc_name);
 
             remove_entry(s->data_base, doc_name);
-            add_entry(s->data_base, doc_name, strlen(doc_name) + 1, doc_content, strlen(doc_content) + 1);
+            add_entry(s->data_base, doc_name, name_len, doc_content, content_len);
         } else {
             sprintf(exit_code->server_response, MSG_C, doc_name);
             sprintf(exit_code->server_log, LOG_MISS, doc_name);
 
-            add_entry(s->data_base, doc_name, strlen(doc_name) + 1, doc_content, strlen(doc_content) + 1);
+            add_entry(s->data_base, doc_name, name_len, doc_content, content_len);
         }
 
         if (lru_cache_is_full(s->cache)) {
@@ -214,7 +217,7 @@ void print_cache_order(lru_cache *cache) {
         return;
 
     dll_node_t *curr = cache->data->head;
-    
+
     printf("\n================ Newest ================\n");
 
     for (unsigned int i = 0; i < cache->data->size; i++) {

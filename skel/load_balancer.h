@@ -16,7 +16,6 @@ typedef struct load_balancer {
     int number_of_servers;
 } load_balancer;
 
-
 load_balancer *init_load_balancer(bool enable_vnodes);
 
 void free_load_balancer(load_balancer** main);
@@ -66,6 +65,5 @@ void loader_remove_server(load_balancer* main, int server_id);
  * using them.
  */
 response *loader_forward_request(load_balancer* main, request *req);
-
 
 #endif /* LOAD_BALANCER_H */
