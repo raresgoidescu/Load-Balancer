@@ -1,15 +1,6 @@
-### GOIDESCU Rares-Stefan 2023-2024
+# Distributed Data Base
 
-# Distributed Data Base - Tema 2 SD Seria CA
-
-## Note despre tema
-
-### Ce mi s-a parut interesant?
-
-Ideea temei a fost foarte interesanta.
-Aceasta mi-a dat o idee foarte buna despre cum sunt folosite diferite structuri de date in lumea reala, mai ales cand vorbim de centre de stocare a datelor.
-
-### Care a fost cea mai dificila parte a temei?
+### Care a fost cea mai dificila parte?
 
 As zice ca implementarea server-ului si a cache-ului a fost cea mai dificila din cauza multiplelor probleme cu management-ul memoriei.
 
@@ -46,7 +37,6 @@ Daca nu este gasit niciun server cu un hash mai mare decat cel al documentului, 
 
 Ca structuri de date, am folosit un dictionar care tine documentele, o coada implementata cu o lista simplu inlantuita pentru request-uri si cache-ul despre care o sa vorbesc mai jos.
 
-In mare parte, am urmat flow-ul descris in cerinta temei, insa am intampinat extrem de multe probleme cu valgrind-ul intrucat nu stiam exact unde si cand se elibereaza memoria
 request-urilor, asa ca am facut copii ale acestora, apoi le-am adaugat in coada de cereri.
 
 ### HANDLE REQUEST
@@ -88,15 +78,11 @@ Daca documentul nu exista, nu intoarcem nimic, iar daca exista, documentul este 
 
 Daca nu exista documentul pe care il vrem sters din cache, ne oprim, iar daca exista, pur si simplu il scoatem din lista (folosind accesul rapid cu dictionarul), iar mai apoi il scoatem si din dictionar.
 
-## BONUS
-
-La urmatoarea tema, promit :D
-
 ---
 
 ## PS
 
-Am schimbat cateva obiceiuri, luand in considerare feedback-ul de la tema trecuta:
+Am schimbat cateva obiceiuri, luand in considerare feedback-ul:
 - Am inceput sa folosesc formatul Doxygen (care imi place prea mult)
 - Am inceput sa nu mai tin cont de cele 80 de coloane in README, intrucat am inteles ca este mai eficient sa primesc review cand fiecare propozitie ocupa un singur rand
 - Am incercat sa mentin, in continuare, README-ul scurt si la obiect, fara a pierde din informatii
